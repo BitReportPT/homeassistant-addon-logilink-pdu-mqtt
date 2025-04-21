@@ -1,0 +1,13 @@
+{
+  "version": "1.1",
+  "changelog": "Initial public release with support for multiple PDUs, MQTT control and monitoring (LogiLink PDU8P01)",
+  "url": "https://github.com/seu-utilizador/homeassistant-addon-logilink-pdu-mqtt",
+  "homeassistant": "2024.0.0",
+  "hassio_api": true,
+  "hassio_role": "default",
+  "arch": [
+    "amd64",
+    "aarch64",
+    "armv7"
+  ]
+}
