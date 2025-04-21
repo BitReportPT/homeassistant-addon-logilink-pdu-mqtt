@@ -15,7 +15,7 @@ A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01
 ## 🚀 Installation (via HACS)
 
 1. Upload this repository to your GitHub:  
-   Example: `https://github.com/BitReportPT/homeassistant-addon-logilink-pdu-mqtt`
+   Example: `https://github.com/YOUR_USERNAME/homeassistant-addon-logilink-pdu-mqtt`
 
 2. In Home Assistant:
    - Go to `Settings → Add-ons → ... (top right) → Repositories`
@@ -36,7 +36,7 @@ mqtt_password: "supersecure"
 mqtt_topic: "pdu"
 pdu_list:
   - name: rack_01
-    host: "192.168.1.100"
+    host: "192.168.1.112"
     username: "admin"
     password: "admin"
 ```

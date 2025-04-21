@@ -14,7 +14,9 @@ mqtt_password = os.getenv('MQTT_PASSWORD')
 mqtt_topic = os.getenv('MQTT_TOPIC', 'pdu')
 pdu_list = json.loads(os.getenv('PDU_LIST', '[]'))
 
-client = mqtt.Client(protocol=mqtt.MQTTv311, callback_api_version=5)
+from paho.mqtt.client import CallbackAPIVersion
+
+client = mqtt.Client(protocol=mqtt.MQTTv311, callback_api_version=CallbackAPIVersion.V5)
 if mqtt_user and mqtt_password:
     client.username_pw_set(mqtt_user, mqtt_password)
 

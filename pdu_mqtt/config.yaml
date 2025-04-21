@@ -1,7 +1,7 @@
-name: Logilink PDU8P01 Home Assistant addon
+name: Intellinet PDU MQTT Bridge
 version: "1.1"
 slug: pdu_mqtt
-description: "MQTT bridge for multiple Logilink PDU8P01"
+description: "MQTT bridge for multiple Intellinet 163682 PDUs using longmover API"
 arch:
   - amd64
   - aarch64
@@ -17,7 +17,7 @@ options:
   mqtt_topic: "pdu"
   pdu_list:
     - name: rack_01
-      host: "192.168.1.100"
+      host: "192.168.1.112"
       username: "admin"
       password: "admin"
 schema:
