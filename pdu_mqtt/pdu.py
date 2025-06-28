@@ -22,27 +22,27 @@ class PDU:
             
             if r.status_code != 200:
                 logger.error(f"HTTP {r.status_code} from {self.host}: {r.text}")
-                return {}
-            
+            return {}
+
             if "<response>" not in r.text:
                 logger.error(f"Invalid XML response from {self.host}: {r.text[:200]}")
                 return {}
 
-            xml = ET.fromstring(r.text)
-            data = {
-                "outlets": [],
-                "tempBan": xml.findtext("tempBan"),
-                "humBan": xml.findtext("humBan"),
-                "curBan": xml.findtext("curBan")
-            }
+        xml = ET.fromstring(r.text)
+        data = {
+            "outlets": [],
+            "tempBan": xml.findtext("tempBan"),
+            "humBan": xml.findtext("humBan"),
+            "curBan": xml.findtext("curBan")
+        }
             
-            for i in range(8):
-                tag = f"outletStat{i}"
-                val = xml.findtext(tag)
-                data["outlets"].append(val.lower() if val else "off")
+        for i in range(8):
+            tag = f"outletStat{i}"
+            val = xml.findtext(tag)
+            data["outlets"].append(val.lower() if val else "off")
             
             logger.debug(f"Status for {self.host}: {data}")
-            return data
+        return data
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error for {self.host}: {e}")
@@ -59,10 +59,10 @@ class PDU:
             raise ValueError("Outlet number must be 1-8")
 
         try:
-            # outletX is zero-indexed
-            outlet_key = f"outlet{outlet_num - 1}"
-            op = "0" if state else "1"  # 0 = ON, 1 = OFF
-            payload = {outlet_key: "1", "op": op}
+        # outletX is zero-indexed
+        outlet_key = f"outlet{outlet_num - 1}"
+        op = "0" if state else "1"  # 0 = ON, 1 = OFF
+        payload = {outlet_key: "1", "op": op}
             
             logger.info(f"Setting {self.host} outlet {outlet_num} to {'ON' if state else 'OFF'}")
             
