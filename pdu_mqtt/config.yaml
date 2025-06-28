@@ -15,6 +15,8 @@ options:
   mqtt_user: "mqttuser"
   mqtt_password: "mqttpass"
   mqtt_topic: "pdu"
+  auto_discovery: false
+  discovery_network: "192.168.1"
   pdu_list:
     - name: rack_01
       host: "192.168.1.112"
@@ -26,6 +28,8 @@ schema:
   mqtt_user: str
   mqtt_password: str
   mqtt_topic: str
+  auto_discovery: bool
+  discovery_network: str
   pdu_list:
     - name: str
       host: str

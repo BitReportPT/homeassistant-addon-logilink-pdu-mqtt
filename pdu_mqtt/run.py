@@ -4,6 +4,8 @@ import json
 import logging
 import paho.mqtt.client as mqtt
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 # Configure logging
 logging.basicConfig(
@@ -22,16 +24,47 @@ mqtt_user = os.getenv('MQTT_USER')
 mqtt_password = os.getenv('MQTT_PASSWORD')
 mqtt_topic = os.getenv('MQTT_TOPIC', 'pdu')
 pdu_list = json.loads(os.getenv('PDU_LIST', '[]'))
+auto_discovery = os.getenv('AUTO_DISCOVERY', 'false').lower() == 'true'
+discovery_network = os.getenv('DISCOVERY_NETWORK', '192.168.1')
 
 logger.info(f"Starting PDU MQTT Bridge")
 logger.info(f"MQTT Host: {mqtt_host}:{mqtt_port}")
 logger.info(f"MQTT Topic: {mqtt_topic}")
+logger.info(f"Auto Discovery: {auto_discovery}")
 logger.info(f"PDU List: {[p['name'] for p in pdu_list]}")
 
 # Initialize MQTT client with compatible version
 client = mqtt.Client(protocol=mqtt.MQTTv311)
 if mqtt_user and mqtt_password:
     client.username_pw_set(mqtt_user, mqtt_password)
+
+def discover_pdus():
+    """Auto-discover PDUs on the network"""
+    logger.info(f"Starting auto-discovery on network {discovery_network}")
+    
+    from discover_pdus import scan_network, test_pdu_credentials
+    
+    # Scan for PDUs
+    found_pdus = scan_network(discovery_network)
+    
+    if not found_pdus:
+        logger.warning("No PDUs found during auto-discovery")
+        return []
+    
+    # Test credentials for found PDUs
+    working_pdus = []
+    for pdu in found_pdus:
+        username, password = test_pdu_credentials(pdu['ip'])
+        if username and password:
+            working_pdus.append({
+                "name": f"pdu_{pdu['ip'].replace('.', '_')}",
+                "host": pdu['ip'],
+                "username": username,
+                "password": password
+            })
+            logger.info(f"Auto-discovered PDU: {pdu['ip']} ({username}:{password})")
+    
+    return working_pdus
 
 def publish_status(pdu_name, pdu):
     try:
@@ -68,7 +101,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("Successfully connected to MQTT broker")
         # Subscribe to control topics for all PDUs
-        for p in pdu_list:
+        for p in loaded_pdus:
             for i in range(8):
                 outlet = f"{mqtt_topic}/{p['name']}/outlet{i+1}/set"
                 client.subscribe(outlet)
@@ -108,8 +141,10 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.on_message = on_message
 
-# Initialize PDUs
+# Initialize PDUs (manual + auto-discovery)
 loaded_pdus = []
+
+# Add manually configured PDUs
 for entry in pdu_list:
     try:
         pdu = PDU(entry["host"], username=entry["username"], password=entry["password"])
@@ -117,13 +152,32 @@ for entry in pdu_list:
             "name": entry["name"],
             "pdu": pdu
         })
-        logger.info(f"Initialized PDU: {entry['name']} at {entry['host']}")
+        logger.info(f"Initialized manual PDU: {entry['name']} at {entry['host']}")
     except Exception as e:
-        logger.error(f"Failed to initialize PDU {entry['name']}: {e}")
+        logger.error(f"Failed to initialize manual PDU {entry['name']}: {e}")
+
+# Auto-discovery if enabled
+if auto_discovery:
+    try:
+        discovered_pdus = discover_pdus()
+        for entry in discovered_pdus:
+            try:
+                pdu = PDU(entry["host"], username=entry["username"], password=entry["password"])
+                loaded_pdus.append({
+                    "name": entry["name"],
+                    "pdu": pdu
+                })
+                logger.info(f"Initialized discovered PDU: {entry['name']} at {entry['host']}")
+            except Exception as e:
+                logger.error(f"Failed to initialize discovered PDU {entry['name']}: {e}")
+    except Exception as e:
+        logger.error(f"Auto-discovery failed: {e}")
 
 if not loaded_pdus:
     logger.error("No PDUs were successfully initialized. Exiting.")
     sys.exit(1)
+
+logger.info(f"Total PDUs loaded: {len(loaded_pdus)}")
 
 # Connect to MQTT broker
 try:
@@ -134,15 +188,24 @@ except Exception as e:
     logger.error(f"Failed to connect to MQTT broker: {e}")
     sys.exit(1)
 
-# Main loop
+# Main loop with parallel processing
 logger.info("Starting main loop...")
 try:
     while True:
-        for entry in loaded_pdus:
-            try:
-                publish_status(entry["name"], entry["pdu"])
-            except Exception as e:
-                logger.error(f"Error in main loop for {entry['name']}: {e}")
+        # Use ThreadPoolExecutor for parallel PDU status updates
+        with ThreadPoolExecutor(max_workers=len(loaded_pdus)) as executor:
+            futures = []
+            for entry in loaded_pdus:
+                future = executor.submit(publish_status, entry["name"], entry["pdu"])
+                futures.append(future)
+            
+            # Wait for all futures to complete
+            for future in futures:
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"Error in parallel processing: {e}")
+        
         time.sleep(15)
 except KeyboardInterrupt:
     logger.info("Shutting down...")

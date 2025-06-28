@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY run.py .
 COPY pdu.py .
+COPY discover_pdus.py .
 
 # Create non-root user for security
 RUN useradd -m -u 1000 pduuser && chown -R pduuser:pduuser /app

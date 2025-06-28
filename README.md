@@ -1,16 +1,17 @@
-# LogiLink PDU MQTT Bridge
+# LogiLink & Intellinet PDU MQTT Bridge
 
-A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01 (rack-mounted, IP-controlled smart power distribution units) and publishes their status and controls via MQTT. Includes temperature, humidity, and current monitoring.
+A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01 and Intellinet 163682 (rack-mounted, IP-controlled smart power distribution units) and publishes their status and controls via MQTT. Includes temperature, humidity, and current monitoring.
 
 ## ✅ Features
 
-- Control 8 power outlets per PDU (on/off)
-- Read PDU environment sensors: **temperature**, **humidity**, **current**
-- Multi-PDU support (each with a unique name)
-- MQTT integration (with `retain: true`)
-- Full configuration via UI
-- Compatible with the **latest Home Assistant version** (2024+)
-- Ready to use as a **custom repository in HACS**
+- **Control 8 power outlets per PDU** (on/off)
+- **Read PDU environment sensors**: temperature, humidity, current
+- **Multi-PDU support** (each with a unique name)
+- **Auto-discovery** of PDUs on the network
+- **MQTT integration** (with `retain: true`)
+- **Full configuration via UI**
+- **Compatible with the latest Home Assistant version** (2024+)
+- **Ready to use as a custom repository in HACS**
 
 ## 🚀 Installation (via HACS)
 
@@ -20,26 +21,86 @@ A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01
 2. In Home Assistant:
    - Go to `Settings → Add-ons → ... (top right) → Repositories`
    - Add your GitHub link as **type: Add-on repository**
-   - It will appear in the add-on store as **LogiLink PDU MQTT Bridge**
+   - It will appear in the add-on store as **LogiLink & Intellinet PDU MQTT Bridge**
 
 3. Install and configure it via the UI
 
 ## ⚙️ Configuration Options
 
-Example:
-
+### Basic Configuration
 ```yaml
 mqtt_host: "192.168.1.10"
 mqtt_port: 1883
 mqtt_user: "ha"
 mqtt_password: "supersecure"
 mqtt_topic: "pdu"
+auto_discovery: false
+discovery_network: "192.168.1"
 pdu_list:
   - name: rack_01
     host: "192.168.1.112"
     username: "admin"
     password: "admin"
 ```
+
+### Auto-Discovery Configuration
+```yaml
+mqtt_host: "192.168.1.10"
+mqtt_port: 1883
+mqtt_user: "ha"
+mqtt_password: "supersecure"
+mqtt_topic: "pdu"
+auto_discovery: true
+discovery_network: "192.168.1"
+pdu_list: []  # Empty - PDUs will be auto-discovered
+```
+
+### Multiple PDUs Configuration
+```yaml
+mqtt_host: "192.168.1.10"
+mqtt_port: 1883
+mqtt_user: "ha"
+mqtt_password: "supersecure"
+mqtt_topic: "pdu"
+auto_discovery: false
+discovery_network: "192.168.1"
+pdu_list:
+  - name: rack_01
+    host: "192.168.1.112"
+    username: "admin"
+    password: "admin"
+  - name: rack_02
+    host: "192.168.1.113"
+    username: "admin"
+    password: "admin"
+  - name: server_room
+    host: "192.168.1.114"
+    username: "admin"
+    password: "admin"
+```
+
+## 🔍 Auto-Discovery
+
+The add-on can automatically discover PDUs on your network:
+
+1. **Enable auto-discovery** in the configuration
+2. **Set the network prefix** (e.g., "192.168.1")
+3. **The add-on will scan** for PDUs and test common credentials
+4. **Discovered PDUs** will be automatically configured
+
+### Manual Discovery
+You can also run the discovery script manually:
+
+```bash
+# From the add-on directory
+python discover_pdus.py 192.168.1
+```
+
+This will:
+- Scan the network for PDUs
+- Test common credentials (admin/admin, admin/password, etc.)
+- Generate a configuration file
+- Show you the discovered PDUs
 
 ## 📡 MQTT Topics
 
@@ -76,7 +137,7 @@ mqtt:
 1. **Add-on won't start**
    - Check MQTT broker connectivity
    - Verify PDU IP addresses are reachable
-   - Check logs in Home Assistant → Settings → Add-ons → LogiLink PDU MQTT Bridge → Logs
+   - Check logs in Home Assistant → Settings → Add-ons → LogiLink & Intellinet PDU MQTT Bridge → Logs
 
 2. **No data from PDU**
    - Test PDU connectivity manually:
@@ -90,6 +151,11 @@ mqtt:
    - Verify MQTT broker is running
    - Check MQTT credentials
    - Use MQTT Explorer to monitor topics
+
+4. **Auto-discovery not working**
+   - Check if PDUs are on the specified network
+   - Verify network connectivity
+   - Check logs for discovery errors
 
 ### Testing PDU Connection
 
@@ -120,9 +186,14 @@ log_level: DEBUG
    mosquitto_pub -h YOUR_MQTT_HOST -u YOUR_USER -P YOUR_PASS -t "pdu/test" -m "test"
    ```
 
+3. **Run discovery manually:**
+   ```bash
+   python discover_pdus.py YOUR_NETWORK_PREFIX
+   ```
+
 ## 📦 Compatibility
 
-- Tested with: LogiLink PDU8P01
+- Tested with: LogiLink PDU8P01, Intellinet 163682
 - May work with other similar HTTP/XML-based smart PDUs
 
 ## 🐛 Known Issues
@@ -130,8 +201,19 @@ log_level: DEBUG
 - Some PDU models may have different XML structure
 - Network timeouts may occur with slow PDU responses
 - MQTT retain flag may cause issues with some brokers
+- Auto-discovery may take several minutes on large networks
 
 ## 📝 Changelog
+
+### v1.2
+- Added auto-discovery functionality
+- Improved multi-PDU support with parallel processing
+- Enhanced error handling and logging
+- Added discovery script for manual PDU detection
+- Better MQTT client compatibility
+- Added health checks
+- Enhanced debugging capabilities
+- Fixed import path issues
 
 ### v1.1
 - Improved error handling and logging
