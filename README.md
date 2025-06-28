@@ -69,7 +69,73 @@ mqtt:
       unit_of_measurement: "°C"
 ```
 
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **Add-on won't start**
+   - Check MQTT broker connectivity
+   - Verify PDU IP addresses are reachable
+   - Check logs in Home Assistant → Settings → Add-ons → LogiLink PDU MQTT Bridge → Logs
+
+2. **No data from PDU**
+   - Test PDU connectivity manually:
+     ```bash
+     curl -u admin:admin http://YOUR_PDU_IP/status.xml
+     ```
+   - Verify PDU credentials are correct
+   - Check if PDU is accessible from Home Assistant network
+
+3. **MQTT topics not appearing**
+   - Verify MQTT broker is running
+   - Check MQTT credentials
+   - Use MQTT Explorer to monitor topics
+
+### Testing PDU Connection
+
+You can test PDU connectivity using the included test script:
+
+```bash
+# From the add-on directory
+python test_pdu.py 192.168.1.112 admin admin
+```
+
+### Debug Mode
+
+To enable debug logging, edit the add-on configuration and add:
+
+```yaml
+log_level: DEBUG
+```
+
+### Manual Testing
+
+1. **Test PDU HTTP access:**
+   ```bash
+   curl -u admin:admin http://YOUR_PDU_IP/status.xml
+   ```
+
+2. **Test MQTT connectivity:**
+   ```bash
+   mosquitto_pub -h YOUR_MQTT_HOST -u YOUR_USER -P YOUR_PASS -t "pdu/test" -m "test"
+   ```
+
 ## 📦 Compatibility
 
 - Tested with: LogiLink PDU8P01
 - May work with other similar HTTP/XML-based smart PDUs
+
+## 🐛 Known Issues
+
+- Some PDU models may have different XML structure
+- Network timeouts may occur with slow PDU responses
+- MQTT retain flag may cause issues with some brokers
+
+## 📝 Changelog
+
+### v1.1
+- Improved error handling and logging
+- Better MQTT client compatibility
+- Added health checks
+- Enhanced debugging capabilities
+- Fixed import path issues
