@@ -1,10 +1,20 @@
-# LogiLink & Intellinet PDU MQTT Bridge
+# LogiLink & Intellinet PDU MQTT Bridge (BETA)
+
+> ⚠️ **BETA VERSION - TEST CAREFULLY** ⚠️
+> 
+> This add-on is currently in BETA testing. While basic functionality has been verified, please test thoroughly in your environment before using in production.
+> 
+> **IMPORTANT SAFETY NOTES:**
+> - Test outlet control on non-critical equipment first
+> - Avoid controlling the outlet that powers the PDU itself
+> - Monitor logs carefully during initial testing
+> - Have physical access to equipment for emergency shutdown
 
 A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01 and Intellinet 163682 (rack-mounted, IP-controlled smart power distribution units) and publishes their status and controls via MQTT. Includes temperature, humidity, and current monitoring.
 
 ## ✅ Features
 
-- **Control 8 power outlets per PDU** (on/off)
+- **Control 8 power outlets per PDU** (on/off) - ⚠️ BETA TESTING
 - **Read PDU environment sensors**: temperature, humidity, current
 - **Multi-PDU support** (each with a unique name)
 - **Auto-discovery** of PDUs on the network
@@ -21,7 +31,7 @@ A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01
 2. In Home Assistant:
    - Go to `Settings → Add-ons → ... (top right) → Repositories`
    - Add your GitHub link as **type: Add-on repository**
-   - It will appear in the add-on store as **LogiLink & Intellinet PDU MQTT Bridge**
+   - It will appear in the add-on store as **LogiLink & Intellinet PDU MQTT Bridge (BETA)**
 
 3. Install and configure it via the UI
 
@@ -137,7 +147,7 @@ mqtt:
 1. **Add-on won't start**
    - Check MQTT broker connectivity
    - Verify PDU IP addresses are reachable
-   - Check logs in Home Assistant → Settings → Add-ons → LogiLink & Intellinet PDU MQTT Bridge → Logs
+   - Check logs in Home Assistant → Settings → Add-ons → LogiLink & Intellinet PDU MQTT Bridge (BETA) → Logs
 
 2. **No data from PDU**
    - Test PDU connectivity manually:
@@ -202,10 +212,12 @@ log_level: DEBUG
 - Network timeouts may occur with slow PDU responses
 - MQTT retain flag may cause issues with some brokers
 - Auto-discovery may take several minutes on large networks
+- **BETA: Outlet control needs thorough testing in your environment**
 
 ## 📝 Changelog
 
-### v1.2
+### v1.2-beta
+- **BETA RELEASE** - Marked as beta for safety
 - Added auto-discovery functionality
 - Improved multi-PDU support with parallel processing
 - Enhanced error handling and logging
@@ -214,6 +226,7 @@ log_level: DEBUG
 - Added health checks
 - Enhanced debugging capabilities
 - Fixed import path issues
+- **WARNING: Outlet control not fully tested in production**
 
 ### v1.1
 - Improved error handling and logging

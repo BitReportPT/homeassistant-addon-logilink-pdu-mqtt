@@ -1,7 +1,7 @@
-name: LogiLink & Intellinet PDU MQTT Bridge
-version: "1.1"
-slug: pdu_mqtt
-description: "Home Assistant add-on to monitor and control LogiLink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) via MQTT"
+name: "PDU MQTT Bridge"
+description: "Professional PDU control and monitoring for Home Assistant - Supports LogiLink, Intellinet, and compatible smart PDUs"
+version: "2.0.0"
+slug: "pdu_mqtt"
 arch:
   - amd64
   - aarch64
@@ -9,29 +9,84 @@ arch:
 startup: application
 boot: auto
 host_network: true
+ingress: false
+ingress_port: 0
+panel_icon: mdi:power-plug
+homeassistant_api: false
+hassio_api: false
+hassio_role: default
+map:
+  - config:rw
 options:
-  mqtt_host: "localhost"
-  mqtt_port: 1883
-  mqtt_user: "mqttuser"
-  mqtt_password: "mqttpass"
-  mqtt_topic: "pdu"
-  auto_discovery: false
-  discovery_network: "192.168.1"
-  pdu_list:
-    - name: rack_01
+  # MQTT Configuration
+  mqtt:
+    host: "localhost"
+    port: 1883
+    username: ""
+    password: ""
+    topic_prefix: "pdu"
+    discovery_prefix: "homeassistant"
+    retain: true
+  
+  # PDU Configuration
+  pdus:
+    - name: "rack_01"
       host: "192.168.1.112"
       username: "admin"
       password: "admin"
+      model: "auto"
+      scan_interval: 30
+  
+  # Discovery Settings
+  discovery:
+    enabled: false
+    network: "192.168.1"
+    scan_interval: 300
+    credentials:
+      - username: "admin"
+        password: "admin"
+      - username: "admin"
+        password: "password"
+      - username: "root"
+        password: "admin"
+  
+  # Advanced Settings
+  advanced:
+    log_level: "INFO"
+    health_check: true
+    parallel_requests: 5
+    timeout: 10
+    retry_attempts: 3
+
 schema:
-  mqtt_host: str
-  mqtt_port: int
-  mqtt_user: str
-  mqtt_password: str
-  mqtt_topic: str
-  auto_discovery: bool
-  discovery_network: str
-  pdu_list:
+  mqtt:
+    host: str
+    port: int(1, 65535)
+    username: str
+    password: str
+    topic_prefix: str
+    discovery_prefix: str
+    retain: bool
+  
+  pdus:
     - name: str
       host: str
       username: str
       password: str
+      model: list(auto|logilink|intellinet|custom)
+      scan_interval: int(10, 300)
+  
+  discovery:
+    enabled: bool
+    network: str
+    scan_interval: int(60, 3600)
+    credentials:
+      - username: str
+        password: str
+  
+  advanced:
+    log_level: list(DEBUG|INFO|WARNING|ERROR)
+    health_check: bool
+    parallel_requests: int(1, 10)
+    timeout: int(5, 30)
+    retry_attempts: int(1, 5)

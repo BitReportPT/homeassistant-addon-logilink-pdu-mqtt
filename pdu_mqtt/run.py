@@ -1,218 +1,157 @@
-import time
-import os
+#!/usr/bin/env python3
+"""
+PDU MQTT Bridge - Main Application
+Professional Home Assistant add-on for PDU control and monitoring
+"""
+
+import asyncio
 import json
 import logging
-import paho.mqtt.client as mqtt
+import os
+import signal
 import sys
-import threading
-from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, Any
+
+from pdu_manager import PDUManager
+from mqtt_bridge import MQTTBridge
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler('/var/log/pdu_bridge.log')
+    ]
 )
 logger = logging.getLogger(__name__)
 
-# Import PDU class from the same directory
-from pdu import PDU
-
-# Configuration from environment variables
-mqtt_host = os.getenv('MQTT_HOST', 'localhost')
-mqtt_port = int(os.getenv('MQTT_PORT', 1883))
-mqtt_user = os.getenv('MQTT_USER')
-mqtt_password = os.getenv('MQTT_PASSWORD')
-mqtt_topic = os.getenv('MQTT_TOPIC', 'pdu')
-pdu_list = json.loads(os.getenv('PDU_LIST', '[]'))
-auto_discovery = os.getenv('AUTO_DISCOVERY', 'false').lower() == 'true'
-discovery_network = os.getenv('DISCOVERY_NETWORK', '192.168.1')
-
-logger.info(f"Starting PDU MQTT Bridge")
-logger.info(f"MQTT Host: {mqtt_host}:{mqtt_port}")
-logger.info(f"MQTT Topic: {mqtt_topic}")
-logger.info(f"Auto Discovery: {auto_discovery}")
-logger.info(f"PDU List: {[p['name'] for p in pdu_list]}")
-
-# Initialize MQTT client with compatible version
-client = mqtt.Client(protocol=mqtt.MQTTv311)
-if mqtt_user and mqtt_password:
-    client.username_pw_set(mqtt_user, mqtt_password)
-
-def discover_pdus():
-    """Auto-discover PDUs on the network"""
-    logger.info(f"Starting auto-discovery on network {discovery_network}")
+class PDUApplication:
+    """Main application class"""
     
-    from discover_pdus import scan_network, test_pdu_credentials
+    def __init__(self):
+        self.config = self._load_config()
+        self.pdu_manager = None
+        self.mqtt_bridge = None
+        self.running = False
+        
+    def _load_config(self) -> Dict[str, Any]:
+        """Load configuration from environment variables"""
+        config = {
+            "mqtt": {
+                "host": os.getenv("MQTT_HOST", "localhost"),
+                "port": int(os.getenv("MQTT_PORT", "1883")),
+                "username": os.getenv("MQTT_USERNAME", ""),
+                "password": os.getenv("MQTT_PASSWORD", ""),
+                "topic_prefix": os.getenv("MQTT_TOPIC_PREFIX", "pdu"),
+                "discovery_prefix": os.getenv("MQTT_DISCOVERY_PREFIX", "homeassistant"),
+                "retain": os.getenv("MQTT_RETAIN", "true").lower() == "true"
+            },
+            "pdus": json.loads(os.getenv("PDUS", "[]")),
+            "discovery": {
+                "enabled": os.getenv("DISCOVERY_ENABLED", "false").lower() == "true",
+                "network": os.getenv("DISCOVERY_NETWORK", "192.168.1"),
+                "scan_interval": int(os.getenv("DISCOVERY_SCAN_INTERVAL", "300")),
+                "credentials": json.loads(os.getenv("DISCOVERY_CREDENTIALS", '[]'))
+            },
+            "advanced": {
+                "log_level": os.getenv("LOG_LEVEL", "INFO"),
+                "health_check": os.getenv("HEALTH_CHECK", "true").lower() == "true",
+                "parallel_requests": int(os.getenv("PARALLEL_REQUESTS", "5")),
+                "timeout": int(os.getenv("TIMEOUT", "10")),
+                "retry_attempts": int(os.getenv("RETRY_ATTEMPTS", "3"))
+            }
+        }
+        
+        # Set log level
+        logging.getLogger().setLevel(getattr(logging, config["advanced"]["log_level"]))
+        
+        logger.info("Configuration loaded")
+        logger.debug(f"Config: {json.dumps(config, indent=2)}")
+        
+        return config
     
-    # Scan for PDUs
-    found_pdus = scan_network(discovery_network)
+    async def initialize(self):
+        """Initialize the application"""
+        logger.info("Initializing PDU MQTT Bridge...")
+        
+        try:
+            # Initialize PDU manager
+            self.pdu_manager = PDUManager(self.config)
+            await self.pdu_manager.initialize_pdus()
+            
+            if not self.pdu_manager.pdus:
+                logger.error("No PDUs were initialized. Exiting.")
+                return False
+            
+            # Initialize MQTT bridge
+            self.mqtt_bridge = MQTTBridge(self.config, self.pdu_manager)
+            await self.mqtt_bridge.initialize()
+            
+            logger.info(f"Initialized {len(self.pdu_manager.pdus)} PDU(s)")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Initialization failed: {e}")
+            return False
     
-    if not found_pdus:
-        logger.warning("No PDUs found during auto-discovery")
-        return []
-    
-    # Test credentials for found PDUs
-    working_pdus = []
-    for pdu in found_pdus:
-        username, password = test_pdu_credentials(pdu['ip'])
-        if username and password:
-            working_pdus.append({
-                "name": f"pdu_{pdu['ip'].replace('.', '_')}",
-                "host": pdu['ip'],
-                "username": username,
-                "password": password
-            })
-            logger.info(f"Auto-discovered PDU: {pdu['ip']} ({username}:{password})")
-    
-    return working_pdus
-
-def publish_status(pdu_name, pdu):
-    try:
-        status = pdu.status()
-        if not status:
-            logger.warning(f"No status data received from {pdu_name}")
+    async def start(self):
+        """Start the application"""
+        if not await self.initialize():
             return
-            
-        # Publish outlet states
-        for i in range(8):
-            outlet = f"outlet{i+1}"
-            state = status['outlets'][i] if i < len(status['outlets']) else "off"
-            topic = f"{mqtt_topic}/{pdu_name}/{outlet}"
-            client.publish(topic, state, retain=True)
-            logger.debug(f"Published {topic}: {state}")
         
-        # Publish sensor data
-        if status.get('tempBan'):
-            client.publish(f"{mqtt_topic}/{pdu_name}/temperature", status['tempBan'], retain=True)
-            logger.debug(f"Published temperature for {pdu_name}: {status['tempBan']}")
-            
-        if status.get('humBan'):
-            client.publish(f"{mqtt_topic}/{pdu_name}/humidity", status['humBan'], retain=True)
-            logger.debug(f"Published humidity for {pdu_name}: {status['humBan']}")
-            
-        if status.get('curBan'):
-            client.publish(f"{mqtt_topic}/{pdu_name}/current", status['curBan'], retain=True)
-            logger.debug(f"Published current for {pdu_name}: {status['curBan']}")
-            
-    except Exception as e:
-        logger.error(f"Error publishing status for {pdu_name}: {e}")
-
-def on_connect(client, userdata, flags, rc):
-    if rc == 0:
-        logger.info("Successfully connected to MQTT broker")
-        # Subscribe to control topics for all PDUs
-        for p in loaded_pdus:
-            for i in range(8):
-                outlet = f"{mqtt_topic}/{p['name']}/outlet{i+1}/set"
-                client.subscribe(outlet)
-                logger.info(f"Subscribed to {outlet}")
-    else:
-        logger.error(f"Failed to connect to MQTT broker with code {rc}")
-
-def on_disconnect(client, userdata, rc):
-    if rc != 0:
-        logger.warning(f"Unexpected disconnection from MQTT broker (rc={rc})")
-
-def on_message(client, userdata, msg):
-    try:
-        topic_parts = msg.topic.split("/")
-        if len(topic_parts) >= 4 and topic_parts[-1] == "set":
-            pdu_name = topic_parts[-3]
-            outlet_num = int(topic_parts[-2].replace("outlet", ""))
-            action = msg.payload.decode().lower()
-            
-            logger.info(f"Received command: {pdu_name} outlet {outlet_num} -> {action}")
-            
-            pdu = next((x['pdu'] for x in loaded_pdus if x['name'] == pdu_name), None)
-            if pdu:
-                success = pdu.set_outlet(outlet_num, action == "on")
-                if success:
-                    # Publish updated status
-                    publish_status(pdu_name, pdu)
-                else:
-                    logger.error(f"Failed to control outlet {outlet_num} on {pdu_name}")
-            else:
-                logger.error(f"PDU {pdu_name} not found")
-    except Exception as e:
-        logger.error(f"Error processing MQTT message: {e}")
-
-# Set up MQTT callbacks
-client.on_connect = on_connect
-client.on_disconnect = on_disconnect
-client.on_message = on_message
-
-# Initialize PDUs (manual + auto-discovery)
-loaded_pdus = []
-
-# Add manually configured PDUs
-for entry in pdu_list:
-    try:
-        pdu = PDU(entry["host"], username=entry["username"], password=entry["password"])
-        loaded_pdus.append({
-            "name": entry["name"],
-            "pdu": pdu
-        })
-        logger.info(f"Initialized manual PDU: {entry['name']} at {entry['host']}")
-    except Exception as e:
-        logger.error(f"Failed to initialize manual PDU {entry['name']}: {e}")
-
-# Auto-discovery if enabled
-if auto_discovery:
-    try:
-        discovered_pdus = discover_pdus()
-        for entry in discovered_pdus:
-            try:
-                pdu = PDU(entry["host"], username=entry["username"], password=entry["password"])
-                loaded_pdus.append({
-                    "name": entry["name"],
-                    "pdu": pdu
-                })
-                logger.info(f"Initialized discovered PDU: {entry['name']} at {entry['host']}")
-            except Exception as e:
-                logger.error(f"Failed to initialize discovered PDU {entry['name']}: {e}")
-    except Exception as e:
-        logger.error(f"Auto-discovery failed: {e}")
-
-if not loaded_pdus:
-    logger.error("No PDUs were successfully initialized. Exiting.")
-    sys.exit(1)
-
-logger.info(f"Total PDUs loaded: {len(loaded_pdus)}")
-
-# Connect to MQTT broker
-try:
-    client.connect(mqtt_host, mqtt_port, 60)
-    client.loop_start()
-    logger.info("MQTT client started")
-except Exception as e:
-    logger.error(f"Failed to connect to MQTT broker: {e}")
-    sys.exit(1)
-
-# Main loop with parallel processing
-logger.info("Starting main loop...")
-try:
-    while True:
-        # Use ThreadPoolExecutor for parallel PDU status updates
-        with ThreadPoolExecutor(max_workers=len(loaded_pdus)) as executor:
-            futures = []
-            for entry in loaded_pdus:
-                future = executor.submit(publish_status, entry["name"], entry["pdu"])
-                futures.append(future)
-            
-            # Wait for all futures to complete
-            for future in futures:
-                try:
-                    future.result()
-                except Exception as e:
-                    logger.error(f"Error in parallel processing: {e}")
+        self.running = True
+        logger.info("Starting PDU MQTT Bridge...")
         
-        time.sleep(15)
-except KeyboardInterrupt:
-    logger.info("Shutting down...")
-    client.loop_stop()
-    client.disconnect()
-except Exception as e:
-    logger.error(f"Unexpected error in main loop: {e}")
-    client.loop_stop()
-    client.disconnect()
-    sys.exit(1)
+        # Set up signal handlers
+        for sig in (signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, self._signal_handler)
+        
+        try:
+            # Start monitoring and publishing tasks
+            tasks = [
+                asyncio.create_task(self.pdu_manager.start_monitoring()),
+                asyncio.create_task(self.mqtt_bridge.start_publishing())
+            ]
+            
+            # Wait for tasks to complete
+            await asyncio.gather(*tasks)
+            
+        except asyncio.CancelledError:
+            logger.info("Application cancelled")
+        except Exception as e:
+            logger.error(f"Application error: {e}")
+        finally:
+            await self.cleanup()
+    
+    def _signal_handler(self, signum, frame):
+        """Handle shutdown signals"""
+        logger.info(f"Received signal {signum}, shutting down...")
+        self.running = False
+        self.pdu_manager.stop_monitoring()
+    
+    async def cleanup(self):
+        """Cleanup resources"""
+        logger.info("Cleaning up...")
+        
+        if self.pdu_manager:
+            await self.pdu_manager.cleanup()
+        
+        if self.mqtt_bridge:
+            self.mqtt_bridge.disconnect()
+        
+        logger.info("Cleanup completed")
+
+async def main():
+    """Main entry point"""
+    app = PDUApplication()
+    await app.start()
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Application interrupted by user")
+    except Exception as e:
+        logger.error(f"Application failed: {e}")
+        sys.exit(1)
