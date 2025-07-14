@@ -2,7 +2,7 @@
   "name": "LogiLink PDU MQTT Bridge",
   "slug": "pdu_mqtt",
   "description": "Simple MQTT bridge for LogiLink PDU8P01 smart PDU",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "startup": "application",
   "boot": "auto",
   "host_network": true,
@@ -23,8 +23,8 @@
   "schema": {
     "mqtt_host": "str",
     "mqtt_port": "int",
-    "mqtt_user": "str?",
-    "mqtt_password": "str?",
+    "mqtt_user": "str",
+    "mqtt_password": "str",
     "pdu_list": [
       {
         "name": "str",

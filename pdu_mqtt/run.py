@@ -31,11 +31,13 @@ class SimplePDU:
         self.base_url = f"http://{host}"
         self.session = requests.Session()
         self.session.auth = (username, password)
+        logger.info(f"PDU initialized: {host}")
     
     def get_status(self) -> Dict[str, Any]:
         """Get PDU status"""
         try:
-            response = self.session.get(f"{self.base_url}/status.xml")
+            logger.debug(f"Getting status from {self.base_url}/status.xml")
+            response = self.session.get(f"{self.base_url}/status.xml", timeout=10)
             response.raise_for_status()
             
             root = ET.fromstring(response.text)
@@ -53,6 +55,7 @@ class SimplePDU:
                     "power": power
                 })
             
+            logger.debug(f"PDU status: {status}")
             return status
             
         except Exception as e:
@@ -69,7 +72,8 @@ class SimplePDU:
                 "action": action
             }
             
-            response = self.session.post(url, data=data)
+            logger.debug(f"Setting outlet {outlet_num} to {action}")
+            response = self.session.post(url, data=data, timeout=10)
             response.raise_for_status()
             
             logger.info(f"Set outlet {outlet_num} to {action}")
@@ -82,9 +86,11 @@ class SimplePDU:
 def load_config():
     """Load configuration from Home Assistant add-on options"""
     try:
+        logger.info("Loading configuration from /data/options.json")
         with open('/data/options.json', 'r') as f:
             options = json.load(f)
-        logger.info("Loaded configuration from Home Assistant options")
+        logger.info("Configuration loaded successfully")
+        logger.info(f"Configuration: {json.dumps(options, indent=2)}")
         return options
     except FileNotFoundError:
         logger.error("Options file not found at /data/options.json")
@@ -172,7 +178,7 @@ def publish_status(client, pdu: SimplePDU):
 
 def main():
     """Main function"""
-    logger.info("Starting PDU MQTT Bridge - Simplified Version")
+    logger.info("Starting PDU MQTT Bridge - Simplified Version 1.2.1")
     
     # Load configuration
     config = load_config()
