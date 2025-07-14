@@ -6,6 +6,8 @@
   "startup": "application",
   "boot": "auto",
   "host_network": true,
+  "maintainer": "BitReport",
+  "author": "BitReport",
   "options": {
     "mqtt_host": "localhost",
     "mqtt_port": 1883,
