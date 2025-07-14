@@ -170,7 +170,7 @@ def main():
         pdu_instances[pdu_name] = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
         logger.info(f"Created PDU instance for {pdu_name}")
     
-    logger.info(f"Starting PDU MQTT Bridge v1.1.5")
+    logger.info(f"Starting PDU MQTT Bridge v1.2.1")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
     logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
     logger.info(f"PDUs: {[pdu['name'] for pdu in pdu_list]}")

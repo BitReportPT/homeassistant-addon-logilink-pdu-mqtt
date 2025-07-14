@@ -5,6 +5,39 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-01-25
+
+### Added
+- Debug logging mode for better troubleshooting
+- Comprehensive dashboard with all 8 outlet controls
+- Advanced configuration options via dashboard
+- Quick actions for All ON/OFF with confirmations
+- Power sequence script for sequential outlet control
+- Outlet configuration selector in dashboard
+- High current alert automation
+- Extended PDU control implementation (pdu_extended.py) for future features
+- Complete MQTT feature documentation
+- Verification guide and test scripts
+
+### Fixed
+- Fixed version string consistency across all files
+- Improved status publishing with proper error handling
+- Added missing debug messages for status updates
+- Fixed dashboard to enable all 8 outlets (removed test restrictions)
+
+### Changed
+- Enhanced logging to show status updates every 30 seconds
+- Improved error messages for better debugging
+- Dashboard now shows all outlets as fully functional
+- Added confirmation dialogs for critical actions
+- Better organization of dashboard controls
+
+### Documentation
+- Added MQTT_FEATURES.md with complete topic documentation
+- Created VERIFICATION_GUIDE.md for troubleshooting
+- Added test_commands.sh for easy MQTT testing
+- Updated examples with working configurations
+
 ## [1.2.0] - 2025-01-25
 
 ### Added
