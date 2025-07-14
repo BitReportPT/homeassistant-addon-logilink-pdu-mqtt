@@ -19,13 +19,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Get configuration from environment variables
-mqtt_host = os.getenv('MQTT_HOST', 'localhost')
-mqtt_port = int(os.getenv('MQTT_PORT', 1883))
-mqtt_user = os.getenv('MQTT_USER')
-mqtt_password = os.getenv('MQTT_PASSWORD')
-mqtt_topic = os.getenv('MQTT_TOPIC', 'pdu')
-pdu_list = json.loads(os.getenv('PDU_LIST', '[]'))
+# Load configuration from Home Assistant options
+def load_config():
+    """Load configuration from Home Assistant add-on options"""
+    try:
+        # Try to read from Home Assistant options file
+        with open('/data/options.json', 'r') as f:
+            options = json.load(f)
+        logger.info("Loaded configuration from Home Assistant options")
+        return options
+    except FileNotFoundError:
+        logger.warning("Options file not found, using environment variables")
+        # Fallback to environment variables
+        return {
+            'mqtt_host': os.getenv('MQTT_HOST', 'localhost'),
+            'mqtt_port': int(os.getenv('MQTT_PORT', 1883)),
+            'mqtt_user': os.getenv('MQTT_USER', ''),
+            'mqtt_password': os.getenv('MQTT_PASSWORD', ''),
+            'mqtt_topic': os.getenv('MQTT_TOPIC', 'pdu'),
+            'pdu_list': json.loads(os.getenv('PDU_LIST', '[]'))
+        }
+    except Exception as e:
+        logger.error(f"Error loading configuration: {e}")
+        return {}
+
+# Load configuration
+config = load_config()
+mqtt_host = config.get('mqtt_host', 'localhost')
+mqtt_port = config.get('mqtt_port', 1883)
+mqtt_user = config.get('mqtt_user', '')
+mqtt_password = config.get('mqtt_password', '')
+mqtt_topic = config.get('mqtt_topic', 'pdu')
+pdu_list = config.get('pdu_list', [])
 
 # MQTT client setup
 client = mqtt.Client()
@@ -44,6 +69,16 @@ def on_connect(client, userdata, flags, rc):
                 logger.info(f"Subscribed to {topic}")
     else:
         logger.error(f"Failed to connect to MQTT broker, return code {rc}")
+        if rc == 5:
+            logger.error("MQTT Error: Authentication failed - check username/password")
+        elif rc == 1:
+            logger.error("MQTT Error: Connection refused - incorrect protocol version")
+        elif rc == 2:
+            logger.error("MQTT Error: Connection refused - invalid client identifier")
+        elif rc == 3:
+            logger.error("MQTT Error: Connection refused - server unavailable")
+        elif rc == 4:
+            logger.error("MQTT Error: Connection refused - bad username or password")
 
 def on_message(client, userdata, msg):
     try:
@@ -91,9 +126,14 @@ def publish_status(pdu_name, pdu):
         logger.error(f"Error publishing status for {pdu_name}: {e}")
 
 def main():
-    logger.info("Starting PDU MQTT Bridge v1.1")
+    logger.info("Starting PDU MQTT Bridge v1.1.1")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
+    logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
     logger.info(f"PDUs: {[p['name'] for p in pdu_list]}")
+    
+    if not pdu_list:
+        logger.error("No PDUs configured! Please check your add-on configuration.")
+        return
     
     # Set up MQTT callbacks
     client.on_connect = on_connect
@@ -101,6 +141,7 @@ def main():
     
     # Connect to MQTT broker
     try:
+        logger.info(f"Connecting to MQTT broker at {mqtt_host}:{mqtt_port}")
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
         
