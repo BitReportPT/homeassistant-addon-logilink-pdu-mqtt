@@ -1,298 +1,51 @@
-# =============================================================================
-# LogiLink & Intellinet PDU MQTT Bridge - Home Assistant Configuration
-# =============================================================================
-# 
-# Este ficheiro contém exemplos completos de configuração para integrar
-# as PDUs no Home Assistant via MQTT.
-#
-# Copia as secções que precisares para o teu configuration.yaml
-# =============================================================================
+# Home Assistant Configuration Example
+# Add this to your configuration.yaml
 
-# =============================================================================
-# 1. CONFIGURAÇÃO MQTT BASE
-# =============================================================================
+# MQTT Configuration (required)
 mqtt:
-  # Broker MQTT (substitui pelos teus dados)
-  broker: 192.168.1.10
+  broker: localhost
   port: 1883
-  username: ha
-  password: supersecure
-  discovery: true
-  discovery_prefix: homeassistant
+  # username: mqttuser  # if needed
+  # password: mqttpass  # if needed
 
-# =============================================================================
-# 2. SWITCHES PARA CONTROLAR AS TOMADAS
-# =============================================================================
-mqtt:
-  switch:
-    # Rack 01 - Tomadas 1-8
-    - name: "Rack 01 - Tomada 1"
-      state_topic: "pdu/rack_01/outlet1"
-      command_topic: "pdu/rack_01/outlet1/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 2"
-      state_topic: "pdu/rack_01/outlet2"
-      command_topic: "pdu/rack_01/outlet2/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 3"
-      state_topic: "pdu/rack_01/outlet3"
-      command_topic: "pdu/rack_01/outlet3/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 4"
-      state_topic: "pdu/rack_01/outlet4"
-      command_topic: "pdu/rack_01/outlet4/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 5"
-      state_topic: "pdu/rack_01/outlet5"
-      command_topic: "pdu/rack_01/outlet5/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 6"
-      state_topic: "pdu/rack_01/outlet6"
-      command_topic: "pdu/rack_01/outlet6/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 7"
-      state_topic: "pdu/rack_01/outlet7"
-      command_topic: "pdu/rack_01/outlet7/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
-      
-    - name: "Rack 01 - Tomada 8"
-      state_topic: "pdu/rack_01/outlet8"
-      command_topic: "pdu/rack_01/outlet8/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
+# MQTT Switch Configuration (optional - auto-discovery should work)
+switch:
+  - platform: mqtt
+    name: "PDU Outlet 1"
+    command_topic: "pdu/outlet_1/set"
+    state_topic: "pdu/outlet_1/state"
+    availability_topic: "pdu/outlet_1/available"
+    payload_on: "ON"
+    payload_off: "OFF"
+    state_on: "ON"
+    state_off: "OFF"
+    optimistic: false
+    retain: true
 
-    # Rack 02 - Tomadas 1-8 (se tiveres múltiplas PDUs)
-    - name: "Rack 02 - Tomada 1"
-      state_topic: "pdu/rack_02/outlet1"
-      command_topic: "pdu/rack_02/outlet1/set"
-      payload_on: "on"
-      payload_off: "off"
-      retain: true
-      icon: mdi:power-plug
-      device_class: switch
+  - platform: mqtt
+    name: "PDU Outlet 8"
+    command_topic: "pdu/outlet_8/set"
+    state_topic: "pdu/outlet_8/state"
+    availability_topic: "pdu/outlet_8/available"
+    payload_on: "ON"
+    payload_off: "OFF"
+    state_on: "ON"
+    state_off: "OFF"
+    optimistic: false
+    retain: true
 
-# =============================================================================
-# 3. SENSORES PARA MONITORIZAÇÃO
-# =============================================================================
-mqtt:
-  sensor:
-    # Temperatura
-    - name: "Rack 01 - Temperatura"
-      state_topic: "pdu/rack_01/temperature"
-      unit_of_measurement: "°C"
-      device_class: temperature
-      icon: mdi:thermometer
-      
-    # Humidade
-    - name: "Rack 01 - Humidade"
-      state_topic: "pdu/rack_01/humidity"
-      unit_of_measurement: "%"
-      device_class: humidity
-      icon: mdi:water-percent
-      
-    # Corrente
-    - name: "Rack 01 - Corrente"
-      state_topic: "pdu/rack_01/current"
-      unit_of_measurement: "A"
-      device_class: current
-      icon: mdi:lightning-bolt
+# MQTT Sensor Configuration (optional - auto-discovery should work)
+sensor:
+  - platform: mqtt
+    name: "PDU Outlet 1 Power"
+    state_topic: "pdu/outlet_1/power"
+    unit_of_measurement: "W"
+    device_class: power
+    availability_topic: "pdu/outlet_1/available"
 
-# =============================================================================
-# 4. BINARY SENSORS PARA STATUS
-# =============================================================================
-mqtt:
-  binary_sensor:
-    # Status geral da PDU
-    - name: "Rack 01 - Status"
-      state_topic: "pdu/rack_01/status"
-      payload_on: "online"
-      payload_off: "offline"
-      device_class: connectivity
-      icon: mdi:server-network
-
-# =============================================================================
-# 5. AUTOMAÇÕES EXEMPLO
-# =============================================================================
-automation:
-  # Desligar equipamentos se temperatura for muito alta
-  - alias: "Desligar equipamentos se temperatura alta"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.rack_01_temperatura
-      above: 35
-    action:
-      - service: switch.turn_off
-        target:
-          entity_id: 
-            - switch.rack_01_tomada_1
-            - switch.rack_01_tomada_2
-            - switch.rack_01_tomada_3
-      - service: notify.mobile_app
-        data:
-          title: "Alerta PDU"
-          message: "Temperatura alta detectada! Equipamentos desligados automaticamente."
-
-  # Notificação se PDU ficar offline
-  - alias: "Notificar PDU offline"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.rack_01_status
-      to: "off"
-    action:
-      - service: notify.mobile_app
-        data:
-          title: "Alerta PDU"
-          message: "PDU Rack 01 ficou offline!"
-
-# =============================================================================
-# 6. SCRIPT PARA CONTROLAR TODAS AS TOMADAS
-# =============================================================================
-script:
-  # Ligar todas as tomadas do rack
-  ligar_todas_rack_01:
-    alias: "Ligar todas as tomadas - Rack 01"
-    sequence:
-      - service: switch.turn_on
-        target:
-          entity_id:
-            - switch.rack_01_tomada_1
-            - switch.rack_01_tomada_2
-            - switch.rack_01_tomada_3
-            - switch.rack_01_tomada_4
-            - switch.rack_01_tomada_5
-            - switch.rack_01_tomada_6
-            - switch.rack_01_tomada_7
-            - switch.rack_01_tomada_8
-
-  # Desligar todas as tomadas do rack
-  desligar_todas_rack_01:
-    alias: "Desligar todas as tomadas - Rack 01"
-    sequence:
-      - service: switch.turn_off
-        target:
-          entity_id:
-            - switch.rack_01_tomada_1
-            - switch.rack_01_tomada_2
-            - switch.rack_01_tomada_3
-            - switch.rack_01_tomada_4
-            - switch.rack_01_tomada_5
-            - switch.rack_01_tomada_6
-            - switch.rack_01_tomada_7
-            - switch.rack_01_tomada_8
-
-# =============================================================================
-# 7. GRUPOS PARA ORGANIZAÇÃO
-# =============================================================================
-group:
-  # Grupo para todas as tomadas do rack 01
-  rack_01_outlets:
-    name: "Rack 01 - Tomadas"
-    entities:
-      - switch.rack_01_tomada_1
-      - switch.rack_01_tomada_2
-      - switch.rack_01_tomada_3
-      - switch.rack_01_tomada_4
-      - switch.rack_01_tomada_5
-      - switch.rack_01_tomada_6
-      - switch.rack_01_tomada_7
-      - switch.rack_01_tomada_8
-
-  # Grupo para sensores do rack 01
-  rack_01_sensors:
-    name: "Rack 01 - Sensores"
-    entities:
-      - sensor.rack_01_temperatura
-      - sensor.rack_01_humidade
-      - sensor.rack_01_corrente
-      - binary_sensor.rack_01_status
-
-# =============================================================================
-# 8. LOVELACE DASHBOARD (YAML)
-# =============================================================================
-# Adiciona isto ao teu dashboard Lovelace
-views:
-  - title: "PDU Control"
-    path: pdu
-    icon: mdi:power-plug
-    cards:
-      # Card principal com todas as tomadas
-      - type: entities
-        title: "Rack 01 - Controlo de Tomadas"
-        entities:
-          - entity: switch.rack_01_tomada_1
-            name: "Servidor 1"
-          - entity: switch.rack_01_tomada_2
-            name: "Servidor 2"
-          - entity: switch.rack_01_tomada_3
-            name: "Switch"
-          - entity: switch.rack_01_tomada_4
-            name: "Router"
-          - entity: switch.rack_01_tomada_5
-            name: "NAS"
-          - entity: switch.rack_01_tomada_6
-            name: "Backup"
-          - entity: switch.rack_01_tomada_7
-            name: "Monitor"
-          - entity: switch.rack_01_tomada_8
-            name: "Lights"
-
-      # Card com sensores
-      - type: entities
-        title: "Rack 01 - Monitorização"
-        entities:
-          - entity: sensor.rack_01_temperatura
-            name: "Temperatura"
-          - entity: sensor.rack_01_humidade
-            name: "Humidade"
-          - entity: sensor.rack_01_corrente
-            name: "Corrente"
-          - entity: binary_sensor.rack_01_status
-            name: "Status"
-
-      # Card com botões de ação
-      - type: button
-        title: "Ações Rápidas"
-        entities:
-          - entity: script.ligar_todas_rack_01
-            name: "Ligar Tudo"
-            icon: mdi:power-plug
-          - entity: script.desligar_todas_rack_01
-            name: "Desligar Tudo"
-            icon: mdi:power-plug-off 
+  - platform: mqtt
+    name: "PDU Outlet 8 Power"
+    state_topic: "pdu/outlet_8/power"
+    unit_of_measurement: "W"
+    device_class: power
+    availability_topic: "pdu/outlet_8/available" 

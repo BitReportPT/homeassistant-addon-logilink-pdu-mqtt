@@ -1,24 +1,25 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
+# Install required packages
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev
+
+# Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all application files
+# Copy application files
 COPY run.py .
-COPY pdu.py .
-COPY pdu_manager.py .
-COPY mqtt_bridge.py .
-COPY discover_pdus.py .
 
-# Create non-root user for security
-RUN useradd -m -u 1000 pduuser && chown -R pduuser:pduuser /app
-USER pduuser
+# Create non-root user
+RUN adduser -D -s /bin/sh app
+USER app
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8123', timeout=5)" || exit 1
-
+# Run the application
 CMD ["python", "run.py"]
