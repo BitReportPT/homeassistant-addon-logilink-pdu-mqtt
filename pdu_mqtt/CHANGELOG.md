@@ -5,6 +5,26 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.9] - 2025-01-25
+
+### Fixed
+- Completely resolved s6-overlay-suexec errors by disabling s6-overlay
+- Removed all s6-overlay dependencies and service structure
+- Add-on now runs Python directly without init system
+- Simplified container execution to avoid PID 1 conflicts
+
+### Changed
+- Set init: false in config.yaml to disable s6-overlay
+- Removed rootfs directory and all s6-overlay service scripts
+- Simplified Dockerfile to run Python directly with CMD
+- Removed unnecessary build arguments and labels
+- Direct Python execution with unbuffered output (-u flag)
+
+### Removed
+- Removed s6-overlay service structure (/etc/services.d/)
+- Removed bashio dependencies from service scripts
+- Removed complex container initialization
+
 ## [1.1.8] - 2025-01-25
 
 ### Fixed
