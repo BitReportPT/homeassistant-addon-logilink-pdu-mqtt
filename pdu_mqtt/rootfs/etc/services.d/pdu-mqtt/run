@@ -1,5 +1,4 @@
 #!/usr/bin/with-contenv bashio
-
 # ==============================================================================
 # LogiLink & Intellinet PDU MQTT Bridge
 # Starts the PDU MQTT Bridge service

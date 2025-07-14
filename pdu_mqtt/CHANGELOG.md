@@ -5,6 +5,20 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2025-01-25
+
+### Fixed
+- Fixed s6-overlay integration to prevent "can only run as pid 1" error
+- Added proper s6-overlay service structure with rootfs directory
+- Removed direct run.sh execution in favor of s6-overlay services
+- Added init: true configuration for proper container initialization
+- Updated Dockerfile to use s6-overlay service structure
+- Added proper service scripts for start and stop handling
+
+### Changed
+- Migrated from direct script execution to s6-overlay service management
+- Updated container structure to follow Home Assistant s6-overlay conventions
+
 ## [1.1.5] - 2025-01-25
 
 ### Fixed
