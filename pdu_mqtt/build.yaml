@@ -1,11 +1,48 @@
 ---
-build_from:
-  aarch64: ghcr.io/hassio-addons/base/aarch64:14.0.0
-  amd64: ghcr.io/hassio-addons/base/amd64:14.0.0
-  armhf: ghcr.io/hassio-addons/base/armhf:14.0.0
-  armv7: ghcr.io/hassio-addons/base/armv7:14.0.0
-  i386: ghcr.io/hassio-addons/base/i386:14.0.0
-labels:
-  io.hass.type: addon
-  io.hass.version: "1.2.1"
-target: pdu-mqtt-{arch} 
+name: "LogiLink & Intellinet PDU MQTT Bridge (BETA)"
+description: "Home Assistant add-on to monitor and control LogiLink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) via MQTT - BETA VERSION"
+version: "1.2-beta"
+slug: "pdu_mqtt"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: application
+boot: auto
+host_network: true
+ingress: false
+ingress_port: 0
+panel_icon: mdi:power-plug
+homeassistant_api: false
+hassio_api: false
+hassio_role: default
+map:
+  - config:rw
+options:
+  mqtt_host: "localhost"
+  mqtt_port: 1883
+  mqtt_user: "mqttuser"
+  mqtt_password: "mqttpass"
+  mqtt_topic: "pdu"
+  auto_discovery: false
+  discovery_network: "192.168.1"
+  pdu_list:
+    - name: "rack_01"
+      host: "192.168.1.112"
+      username: "admin"
+      password: "admin"
+  log_level: "INFO"
+schema:
+  mqtt_host: str
+  mqtt_port: int(1, 65535)
+  mqtt_user: str
+  mqtt_password: str
+  mqtt_topic: str
+  auto_discovery: bool
+  discovery_network: str
+  log_level: list(DEBUG|INFO|WARNING|ERROR)
+  pdu_list:
+    - name: str
+      host: str
+      username: str
+      password: str 

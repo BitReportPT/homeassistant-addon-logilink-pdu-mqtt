@@ -1,0 +1,234 @@
+# =============================================================================
+# Dashboard Lovelace Avançado para PDU Control
+# =============================================================================
+# 
+# Este dashboard inclui:
+# - Controlo visual das tomadas
+# - Gráficos de temperatura e corrente
+# - Estatísticas de uso
+# - Alertas visuais
+# - Botões de ação rápida
+# =============================================================================
+
+title: "PDU Control Center"
+views:
+  - title: "Overview"
+    path: pdu-overview
+    icon: mdi:view-dashboard
+    cards:
+      # Header com estatísticas gerais
+      - type: custom:stack-in-card
+        title: "Estatísticas Gerais"
+        cards:
+          - type: custom:mini-graph-card
+            name: "Temperatura"
+            entity: sensor.rack_01_temperatura
+            line_color: "#ff6b6b"
+            fill_color: "#ff6b6b"
+            points_per_hour: 4
+            hours_to_show: 24
+            animate: true
+            
+          - type: custom:mini-graph-card
+            name: "Corrente"
+            entity: sensor.rack_01_corrente
+            line_color: "#4ecdc4"
+            fill_color: "#4ecdc4"
+            points_per_hour: 4
+            hours_to_show: 24
+            animate: true
+
+      # Controlo visual das tomadas
+      - type: custom:stack-in-card
+        title: "Controlo de Tomadas - Rack 01"
+        cards:
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 1
+              outlet_name: "Servidor 1"
+              entity: switch.rack_01_tomada_1
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 2
+              outlet_name: "Servidor 2"
+              entity: switch.rack_01_tomada_2
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 3
+              outlet_name: "Switch"
+              entity: switch.rack_01_tomada_3
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 4
+              outlet_name: "Router"
+              entity: switch.rack_01_tomada_4
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 5
+              outlet_name: "NAS"
+              entity: switch.rack_01_tomada_5
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 6
+              outlet_name: "Backup"
+              entity: switch.rack_01_tomada_6
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 7
+              outlet_name: "Monitor"
+              entity: switch.rack_01_tomada_7
+              
+          - type: custom:button-card
+            template: pdu_outlet
+            variables:
+              outlet_number: 8
+              outlet_name: "Lights"
+              entity: switch.rack_01_tomada_8
+
+      # Ações rápidas
+      - type: custom:stack-in-card
+        title: "Ações Rápidas"
+        cards:
+          - type: custom:button-card
+            name: "Ligar Tudo"
+            icon: mdi:power-plug
+            tap_action:
+              action: call-service
+              service: script.ligar_todas_rack_01
+            styles:
+              card:
+                - background: "#4caf50"
+                - color: white
+                
+          - type: custom:button-card
+            name: "Desligar Tudo"
+            icon: mdi:power-plug-off
+            tap_action:
+              action: call-service
+              service: script.desligar_todas_rack_01
+            styles:
+              card:
+                - background: "#f44336"
+                - color: white
+
+  - title: "Monitorização"
+    path: pdu-monitoring
+    icon: mdi:chart-line
+    cards:
+      # Gráfico de temperatura detalhado
+      - type: custom:apexcharts-card
+        title: "Temperatura - Últimas 24h"
+        series:
+          - entity: sensor.rack_01_temperatura
+            name: "Temperatura (°C)"
+            color: "#ff6b6b"
+        graph_span: 24h
+        update_interval: 1min
+        
+      # Gráfico de corrente detalhado
+      - type: custom:apexcharts-card
+        title: "Corrente - Últimas 24h"
+        series:
+          - entity: sensor.rack_01_corrente
+            name: "Corrente (A)"
+            color: "#4ecdc4"
+        graph_span: 24h
+        update_interval: 1min
+        
+      # Gráfico de humidade
+      - type: custom:apexcharts-card
+        title: "Humidade - Últimas 24h"
+        series:
+          - entity: sensor.rack_01_humidade
+            name: "Humidade (%)"
+            color: "#45b7d1"
+        graph_span: 24h
+        update_interval: 1min
+
+  - title: "Alertas"
+    path: pdu-alerts
+    icon: mdi:alert
+    cards:
+      # Status das PDUs
+      - type: entities
+        title: "Status das PDUs"
+        entities:
+          - entity: binary_sensor.rack_01_status
+            name: "Rack 01 - Status"
+            
+      # Alertas ativos
+      - type: custom:auto-entities
+        filter:
+          include:
+            - entity_id: sensor.rack_01_temperatura
+              state: "> 30"
+            - entity_id: sensor.rack_01_humidade
+              state: "> 80"
+        card:
+          type: entities
+          title: "Alertas Ativos"
+
+# =============================================================================
+# Templates para Button Cards
+# =============================================================================
+button_card_templates:
+  pdu_outlet:
+    template: pdu_outlet
+    variables:
+      outlet_number: 1
+      outlet_name: "Tomada"
+      entity: switch.rack_01_tomada_1
+    entity: "[[entity]]"
+    name: "[[outlet_name]]"
+    icon: mdi:power-plug
+    show_state: true
+    state:
+      - value: "on"
+        color: "#4caf50"
+        icon: mdi:power-plug
+      - value: "off"
+        color: "#f44336"
+        icon: mdi:power-plug-off
+    tap_action:
+      action: toggle
+    hold_action:
+      action: call-service
+      service: switch.turn_off
+      service_data:
+        entity_id: "[[entity]]"
+    styles:
+      card:
+        - width: 120px
+        - height: 80px
+        - margin: 5px
+        - border-radius: 10px
+        - box-shadow: 0 2px 4px rgba(0,0,0,0.1)
+      name:
+        - font-size: 12px
+        - font-weight: bold
+      icon:
+        - font-size: 24px
+
+# =============================================================================
+# Configuração de Tema (opcional)
+# =============================================================================
+themes:
+  pdu_theme:
+    primary-color: "#4ecdc4"
+    accent-color: "#ff6b6b"
+    background-color: "#f8f9fa"
+    card-background-color: "#ffffff"
+    text-color: "#2c3e50" 

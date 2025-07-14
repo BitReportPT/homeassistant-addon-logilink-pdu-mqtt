@@ -1,8 +1,7 @@
----
-name: "LogiLink PDU MQTT Bridge"
-description: "Simple MQTT bridge for LogiLink PDU8P01 smart PDU"
-version: "1.2.1"
-slug: "pdu_mqtt"
+name: LogiLink & Intellinet PDU MQTT Bridge
+version: "1.1.4"
+slug: pdu_mqtt
+description: "MQTT bridge for multiple Logilink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) via MQTT"
 arch:
   - amd64
   - aarch64
@@ -10,29 +9,23 @@ arch:
 startup: application
 boot: auto
 host_network: true
-ingress: false
-ingress_port: 0
-panel_icon: mdi:power-plug
-homeassistant_api: false
-hassio_api: false
-hassio_role: default
-map:
-  - config:rw
 options:
   mqtt_host: "localhost"
   mqtt_port: 1883
   mqtt_user: ""
   mqtt_password: ""
+  mqtt_topic: "pdu"
   pdu_list:
-    - name: "rack_01"
+    - name: rack_01
       host: "192.168.1.215"
       username: "admin"
       password: "admin"
 schema:
   mqtt_host: str
-  mqtt_port: int(1, 65535)
-  mqtt_user: str
-  mqtt_password: str
+  mqtt_port: int
+  mqtt_user: str?
+  mqtt_password: str?
+  mqtt_topic: str
   pdu_list:
     - name: str
       host: str
