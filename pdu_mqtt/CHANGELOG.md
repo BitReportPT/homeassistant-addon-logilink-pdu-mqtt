@@ -5,6 +5,30 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-07-14
+
+### Added
+- **Complete feature merge** - Combined all extended features into main version
+- Support for all advanced MQTT topics (configuration, thresholds, network, etc.)
+- Device info publishing with model and status
+- Subscriptions to all extended control topics ready for future implementation
+- Text sensor entity for device information
+
+### Changed
+- Major refactoring to merge simple and extended versions
+- Improved code organization and structure
+- Better error handling for all message types
+- Sensor topics now use /sensor/ prefix for consistency
+- This is now the single unified version with all features
+
+### Fixed
+- Fixed sensor topic paths to match documentation
+- Improved connection handling and logging
+
+### Notes
+- Extended features (network config, thresholds, etc.) are subscribed but not yet implemented in PDU class
+- All MQTT topics are ready for future PDU firmware that supports these features
+
 ## [1.2.2] - 2025-07-14
 
 ### Added
