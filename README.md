@@ -1,16 +1,41 @@
-# LogiLink & Intellinet PDU MQTT Bridge (BETA)
+# Universal PDU MQTT Bridge for Home Assistant
 
-> ⚠️ **BETA VERSION - TEST CAREFULLY** ⚠️
-> 
-> This add-on is currently in BETA testing. While basic functionality has been verified, please test thoroughly in your environment before using in production.
-> 
-> **IMPORTANT SAFETY NOTES:**
-> - Test outlet control on non-critical equipment first
-> - Avoid controlling the outlet that powers the PDU itself
-> - Monitor logs carefully during initial testing
-> - Have physical access to equipment for emergency shutdown
+![Home Assistant PDU Dashboard](examples/dashboard.png)
 
-A native Home Assistant add-on that connects to one or multiple LogiLink PDU8P01 and Intellinet 163682 (rack-mounted, IP-controlled smart power distribution units) and publishes their status and controls via MQTT. Includes temperature, humidity, and current monitoring.
+> **Control and monitor any rack-mount Power Distribution Unit (PDU) in your datacenter, server room, homelab, or remote site!**
+
+This add-on brings seamless MQTT integration and Home Assistant auto-discovery to a wide range of smart PDUs, including (but not limited to) LogiLink PDU8P01, Intellinet 163682, and most HTTP/XML-based IP PDUs. Perfect for sysadmins, self-hosters, automation enthusiasts, and anyone managing power in racks, network closets, or edge deployments.
+
+**Keywords:** PDU, rack PDU, smart PDU, IP PDU, MQTT, Home Assistant, datacenter, server rack, remote power control, automation, energy monitoring, LogiLink, Intellinet, power strip, network closet, self-hosting, homelab, server room, remote reboot, power monitoring, compatible with most HTTP/XML-based PDUs.
+
+## 🚀 Features
+- **Works with most HTTP/XML-based PDUs** (LogiLink, Intellinet, and others)
+- **Control 8+ outlets per PDU** (on/off, automation-ready)
+- **Monitor temperature, humidity, current draw**
+- **Multi-PDU support** (manage all your racks from one dashboard)
+- **Auto-discovery and easy setup**
+- **Full MQTT integration** (works with any broker)
+- **Home Assistant auto-discovery** (entities created automatically)
+- **Perfect for datacenters, server rooms, homelabs, remote sites, and edge computing**
+- **Open source, no cloud, no vendor lock-in**
+
+## 📸 Example Dashboard
+See below for a real Home Assistant dashboard controlling a rack PDU with 8 outlets, live sensor data, and quick actions for remote power management:
+
+![PDU Dashboard Example](examples/dashboard.png)
+
+## 🏢 Supported Devices
+- LogiLink PDU8P01 (8x IEC-C13 smart PDU)
+- Intellinet 163682 (8x IEC-C13 smart PDU)
+- Most HTTP/XML-based smart PDUs (contact us to add more models!)
+
+## Typical Use Cases
+- Datacenter rack power management
+- Server room automation
+- Homelab and self-hosted infrastructure
+- Remote reboot and power cycling
+- Energy monitoring and alerting
+- Edge computing and network closet control
 
 ## ✅ Features
 
