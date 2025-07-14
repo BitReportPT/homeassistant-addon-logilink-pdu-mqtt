@@ -46,8 +46,8 @@ def load_config():
             'pdu_list': json.loads(os.getenv('PDU_LIST', '[]'))
         }
 
-def on_connect(client, userdata, flags, rc):
-    """MQTT connection callback"""
+def on_connect(client, userdata, flags, rc, properties=None):
+    """MQTT connection callback (API v2)"""
     if rc == 0:
         logger.info("Connected to MQTT broker")
         # Subscribe to control topics
@@ -69,8 +69,8 @@ def on_connect(client, userdata, flags, rc):
         elif rc == 5:
             logger.error("MQTT Error: Authentication failed - check username/password")
 
-def on_disconnect(client, userdata, rc):
-    """MQTT disconnection callback"""
+def on_disconnect(client, userdata, rc, properties=None):
+    """MQTT disconnection callback (API v2)"""
     logger.info(f"Disconnected from MQTT broker with result code {rc}")
 
 def on_message(client, userdata, msg):
@@ -158,13 +158,13 @@ def main():
         pdu_instances[pdu_name] = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
         logger.info(f"Created PDU instance for {pdu_name}")
     
-    logger.info(f"Starting PDU MQTT Bridge v1.1.1")
+    logger.info(f"Starting PDU MQTT Bridge v1.1.9")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
     logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
     logger.info(f"PDUs: {[pdu['name'] for pdu in pdu_list]}")
     
-    # Create MQTT client
-    client = mqtt.Client()
+    # Create MQTT client with API v2
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     
     # Set credentials if provided
     if mqtt_user and mqtt_password:
@@ -180,6 +180,9 @@ def main():
         logger.info(f"Connecting to MQTT broker at {mqtt_host}:{mqtt_port}")
         client.connect(mqtt_host, mqtt_port, 60)
         client.loop_start()
+        
+        # Wait a bit for connection to establish
+        time.sleep(2)
         
         # Main loop
         while True:

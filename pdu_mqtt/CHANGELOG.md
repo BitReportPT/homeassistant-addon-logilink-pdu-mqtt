@@ -5,6 +5,29 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-25
+
+### Added
+- Full working release with stable operation
+- Confirmed MQTT connectivity and PDU control
+- Successfully tested with LogiLink PDU8P01 devices
+
+### Fixed
+- Fixed MQTT Client deprecation warning by updating to API v2
+- Added proper callback signatures for MQTT v2 API
+- Updated version string in startup message
+
+### Changed
+- Updated MQTT Client to use CallbackAPIVersion.VERSION2
+- Added 2-second delay after connection for stability
+- This is the first stable production-ready release
+
+### Verified
+- MQTT connection working with authentication
+- All 8 outlets subscribing to control topics
+- PDU initialization and communication confirmed
+- No s6-overlay errors after removing init system
+
 ## [1.1.9] - 2025-01-25
 
 ### Fixed

@@ -1,5 +1,5 @@
 name: LogiLink & Intellinet PDU MQTT Bridge
-version: "1.1.9"
+version: "1.2.0"
 slug: pdu_mqtt
 description: "MQTT bridge for multiple Logilink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) via MQTT"
 arch:
