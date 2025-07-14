@@ -19,6 +19,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Global variables
+client = None
+mqtt_topic = None
+pdu_instances = {}  # Store PDU instances to avoid recreating them
+
 # Load configuration from Home Assistant options
 def load_config():
     """Load configuration from Home Assistant add-on options"""
@@ -30,7 +35,7 @@ def load_config():
         logger.info(f"Raw options: {json.dumps(options, indent=2)}")
         return options
     except FileNotFoundError:
-        logger.warning("Options file not found, using environment variables")
+        logger.warning("Home Assistant options file not found, using environment variables")
         # Fallback to environment variables
         return {
             'mqtt_host': os.getenv('MQTT_HOST', 'localhost'),
@@ -40,80 +45,66 @@ def load_config():
             'mqtt_topic': os.getenv('MQTT_TOPIC', 'pdu'),
             'pdu_list': json.loads(os.getenv('PDU_LIST', '[]'))
         }
-    except Exception as e:
-        logger.error(f"Error loading configuration: {e}")
-        return {}
-
-# Load configuration
-config = load_config()
-mqtt_host = config.get('mqtt_host', 'localhost')
-mqtt_port = config.get('mqtt_port', 1883)
-mqtt_user = config.get('mqtt_user', '')
-mqtt_password = config.get('mqtt_password', '')
-mqtt_topic = config.get('mqtt_topic', 'pdu')
-pdu_list = config.get('pdu_list', [])
-
-# Debug logging
-logger.info(f"Configuration loaded:")
-logger.info(f"  mqtt_host: {mqtt_host}")
-logger.info(f"  mqtt_port: {mqtt_port}")
-logger.info(f"  mqtt_user: {mqtt_user}")
-logger.info(f"  mqtt_password: {'*' * len(mqtt_password) if mqtt_password else 'None'}")
-logger.info(f"  mqtt_topic: {mqtt_topic}")
-logger.info(f"  pdu_list: {pdu_list}")
-logger.info(f"  pdu_list type: {type(pdu_list)}")
-logger.info(f"  pdu_list length: {len(pdu_list) if pdu_list else 0}")
-
-# MQTT client setup
-client = mqtt.Client()
-if mqtt_user and mqtt_password:
-    client.username_pw_set(mqtt_user, mqtt_password)
 
 def on_connect(client, userdata, flags, rc):
+    """MQTT connection callback"""
     if rc == 0:
         logger.info("Connected to MQTT broker")
         # Subscribe to control topics
         for pdu_config in pdu_list:
-            pdu_name = pdu_config['name']
             for i in range(8):
-                topic = f"{mqtt_topic}/{pdu_name}/outlet{i+1}/set"
+                topic = f"{mqtt_topic}/{pdu_config['name']}/outlet{i+1}/set"
                 client.subscribe(topic)
                 logger.info(f"Subscribed to {topic}")
     else:
         logger.error(f"Failed to connect to MQTT broker, return code {rc}")
-        if rc == 5:
-            logger.error("MQTT Error: Authentication failed - check username/password")
-        elif rc == 1:
-            logger.error("MQTT Error: Connection refused - incorrect protocol version")
+        if rc == 1:
+            logger.error("MQTT Error: Incorrect protocol version")
         elif rc == 2:
-            logger.error("MQTT Error: Connection refused - invalid client identifier")
+            logger.error("MQTT Error: Invalid client identifier")
         elif rc == 3:
-            logger.error("MQTT Error: Connection refused - server unavailable")
+            logger.error("MQTT Error: Server unavailable")
         elif rc == 4:
-            logger.error("MQTT Error: Connection refused - bad username or password")
+            logger.error("MQTT Error: Bad username or password")
+        elif rc == 5:
+            logger.error("MQTT Error: Authentication failed - check username/password")
+
+def on_disconnect(client, userdata, rc):
+    """MQTT disconnection callback"""
+    logger.info(f"Disconnected from MQTT broker with result code {rc}")
 
 def on_message(client, userdata, msg):
+    """MQTT message callback"""
     try:
-        topic_parts = msg.topic.split('/')
-        if len(topic_parts) >= 4 and topic_parts[-1] == 'set':
-            pdu_name = topic_parts[-3]
-            outlet_str = topic_parts[-2]
-            outlet_num = int(outlet_str.replace('outlet', ''))
-            command = msg.payload.decode().lower()
+        topic = msg.topic
+        payload = msg.payload.decode()
+        logger.info(f"Received message: {topic} = {payload}")
+        
+        # Parse topic: pdu/{pdu_name}/outlet{X}/set
+        parts = topic.split('/')
+        if len(parts) >= 4 and parts[-1] == 'set':
+            pdu_name = parts[1]
+            outlet_str = parts[2]  # outlet1, outlet2, etc.
             
-            logger.info(f"Received command: {pdu_name} {outlet_str} -> {command}")
-            
-            # Find PDU config
-            pdu_config = next((p for p in pdu_list if p['name'] == pdu_name), None)
-            if pdu_config:
-                pdu = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
-                if command == 'on':
-                    pdu.set_outlet(outlet_num, True)
-                elif command == 'off':
-                    pdu.set_outlet(outlet_num, False)
-                    
+            if outlet_str.startswith('outlet'):
+                outlet_num = int(outlet_str[6:])  # Extract number from 'outlet1'
+                state = payload.lower() == 'on'
+                
+                # Find PDU instance
+                if pdu_name in pdu_instances:
+                    pdu = pdu_instances[pdu_name]
+                    success = pdu.set_outlet(outlet_num, state)
+                    if success:
+                        # Publish state confirmation
+                        state_topic = f"{mqtt_topic}/{pdu_name}/outlet{outlet_num}/state"
+                        client.publish(state_topic, "ON" if state else "OFF", retain=True)
+                        logger.info(f"Set {pdu_name} outlet {outlet_num} to {'ON' if state else 'OFF'}")
+                    else:
+                        logger.error(f"Failed to set {pdu_name} outlet {outlet_num}")
+                else:
+                    logger.error(f"PDU {pdu_name} not found")
     except Exception as e:
-        logger.error(f"Error processing command: {e}")
+        logger.error(f"Error processing message {topic}: {e}")
 
 def publish_status(pdu_name, pdu):
     """Publish PDU status to MQTT"""
@@ -124,7 +115,7 @@ def publish_status(pdu_name, pdu):
             for i in range(8):
                 outlet = f"outlet{i+1}"
                 state = status['outlets'][i] if i < len(status['outlets']) else 'off'
-                client.publish(f"{mqtt_topic}/{pdu_name}/{outlet}", state, retain=True)
+                client.publish(f"{mqtt_topic}/{pdu_name}/{outlet}/state", "ON" if state == 'on' else "OFF", retain=True)
             
             # Publish sensor data
             if 'tempBan' in status and status['tempBan']:
@@ -138,18 +129,51 @@ def publish_status(pdu_name, pdu):
         logger.error(f"Error publishing status for {pdu_name}: {e}")
 
 def main():
-    logger.info("Starting PDU MQTT Bridge v1.1.1")
+    global client, mqtt_topic, pdu_list, pdu_instances
+    
+    # Load configuration
+    config = load_config()
+    
+    mqtt_host = config['mqtt_host']
+    mqtt_port = config['mqtt_port']
+    mqtt_user = config['mqtt_user']
+    mqtt_password = config['mqtt_password']
+    mqtt_topic = config['mqtt_topic']
+    pdu_list = config['pdu_list']
+    
+    # Log configuration (mask password)
+    logger.info("Configuration loaded:")
+    logger.info(f"  mqtt_host: {mqtt_host}")
+    logger.info(f"  mqtt_port: {mqtt_port}")
+    logger.info(f"  mqtt_user: {mqtt_user}")
+    logger.info(f"  mqtt_password: {'********' if mqtt_password else 'None'}")
+    logger.info(f"  mqtt_topic: {mqtt_topic}")
+    logger.info(f"  pdu_list: {pdu_list}")
+    logger.info(f"  pdu_list type: {type(pdu_list)}")
+    logger.info(f"  pdu_list length: {len(pdu_list)}")
+    
+    # Create PDU instances once
+    for pdu_config in pdu_list:
+        pdu_name = pdu_config['name']
+        pdu_instances[pdu_name] = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
+        logger.info(f"Created PDU instance for {pdu_name}")
+    
+    logger.info(f"Starting PDU MQTT Bridge v1.1.1")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
     logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
-    logger.info(f"PDUs: {[p['name'] for p in pdu_list]}")
+    logger.info(f"PDUs: {[pdu['name'] for pdu in pdu_list]}")
     
-    if not pdu_list:
-        logger.error("No PDUs configured! Please check your add-on configuration.")
-        return
+    # Create MQTT client
+    client = mqtt.Client()
+    
+    # Set credentials if provided
+    if mqtt_user and mqtt_password:
+        client.username_pw_set(mqtt_user, mqtt_password)
     
     # Set up MQTT callbacks
     client.on_connect = on_connect
     client.on_message = on_message
+    client.on_disconnect = on_disconnect
     
     # Connect to MQTT broker
     try:
@@ -161,8 +185,9 @@ def main():
         while True:
             for pdu_config in pdu_list:
                 try:
-                    pdu = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
-                    publish_status(pdu_config['name'], pdu)
+                    pdu_name = pdu_config['name']
+                    pdu = pdu_instances[pdu_name]
+                    publish_status(pdu_name, pdu)
                 except Exception as e:
                     logger.error(f"Error with PDU {pdu_config['name']}: {e}")
             
@@ -173,8 +198,9 @@ def main():
     except Exception as e:
         logger.error(f"Application error: {e}")
     finally:
-        client.loop_stop()
-        client.disconnect()
+        if client:
+            client.loop_stop()
+            client.disconnect()
 
 if __name__ == "__main__":
     main()

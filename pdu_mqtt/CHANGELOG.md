@@ -5,6 +5,26 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2025-01-25
+
+### Fixed
+- Fixed s6-overlay-suexec errors by optimizing PDU instance creation
+- PDU instances are now created once at startup and reused in the main loop
+- Eliminated repeated PDU initialization that was causing system conflicts
+- Improved memory usage and performance by avoiding unnecessary object creation
+- Fixed MQTT topic structure to use proper state topics with /state suffix
+
+### Changed
+- Refactored main loop to reuse PDU instances instead of creating new ones
+- Improved error handling and logging throughout the application
+- Updated MQTT message handling for better reliability
+- Added proper disconnect callback for MQTT client
+
+### Performance
+- Reduced system resource usage by eliminating redundant PDU instantiation
+- Improved startup time by creating PDU instances once during initialization
+- Better memory management in the main monitoring loop
+
 ## [1.1.7] - 2025-01-25
 
 ### Fixed
