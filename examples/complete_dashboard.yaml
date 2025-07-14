@@ -12,14 +12,13 @@ views:
           - type: markdown
             content: |
               ## 🔌 Outlet Control
-              **⚠️ ATENÇÃO: Só usar outlets 1 e 8 para testes!**
           
           - type: grid
             columns: 2
             cards:
-              # Outlet 1 - SAFE TO TEST
+              # All outlets are fully functional
               - type: button
-                name: "Outlet 1 (TEST)"
+                name: "Outlet 1"
                 entity: switch.rack_01_outlet1
                 icon: mdi:power-plug
                 tap_action:
@@ -28,13 +27,14 @@ views:
                   action: more-info
                 state_color: true
                 
-              # Outlets 2-7 - DO NOT TEST
               - type: button
                 name: "Outlet 2"
                 entity: switch.rack_01_outlet2
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
               - type: button
@@ -42,7 +42,9 @@ views:
                 entity: switch.rack_01_outlet3
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
               - type: button
@@ -50,7 +52,9 @@ views:
                 entity: switch.rack_01_outlet4
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
               - type: button
@@ -58,7 +62,9 @@ views:
                 entity: switch.rack_01_outlet5
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
               - type: button
@@ -66,7 +72,9 @@ views:
                 entity: switch.rack_01_outlet6
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
               - type: button
@@ -74,12 +82,13 @@ views:
                 entity: switch.rack_01_outlet7
                 icon: mdi:power-plug
                 tap_action:
-                  action: none
+                  action: toggle
+                hold_action:
+                  action: more-info
                 state_color: true
                 
-              # Outlet 8 - SAFE TO TEST
               - type: button
-                name: "Outlet 8 (TEST)"
+                name: "Outlet 8"
                 entity: switch.rack_01_outlet8
                 icon: mdi:power-plug
                 tap_action:
@@ -130,30 +139,32 @@ views:
                 min: 0
                 max: 16
 
-      # Manual MQTT Control Card
+      # Advanced Configuration Card
       - type: vertical-stack
         cards:
           - type: markdown
             content: |
-              ## 🔧 Manual MQTT Control
-              Use these inputs to send custom MQTT commands
+              ## 🔧 Advanced Configuration
           
           - type: entities
             entities:
               - type: section
-                label: "Outlet Configuration (JSON)"
+                label: "Outlet Configuration"
               
               - entity: input_text.pdu_outlet_config
                 name: "Outlet Config JSON"
               
+              - entity: input_select.pdu_outlet_number
+                name: "Select Outlet"
+              
               - type: button
-                name: "Apply to Outlet 1"
+                name: "Apply Configuration"
                 icon: mdi:cog
                 tap_action:
                   action: call-service
                   service: mqtt.publish
                   service_data:
-                    topic: "pdu/rack_01/outlet/1/config/set"
+                    topic: "pdu/rack_01/outlet/{{ states('input_select.pdu_outlet_number') }}/config/set"
                     payload_template: "{{ states('input_text.pdu_outlet_config') }}"
                     
               - type: section
@@ -186,7 +197,6 @@ views:
           - type: markdown
             content: |
               ## ⚙️ System Control
-              **⚠️ Use with caution!**
           
           - type: horizontal-stack
             cards:
@@ -200,10 +210,10 @@ views:
                     topic: "pdu/rack_01/system/reboot"
                     payload: "REBOOT"
                   confirmation:
-                    text: "Are you sure you want to reboot the PDU?"
+                    text: "Are you sure you want to reboot the PDU? This will affect ALL connected devices!"
                     
               - type: button
-                name: "Refresh Status"
+                name: "Refresh All Status"
                 icon: mdi:refresh
                 tap_action:
                   action: call-service
@@ -213,12 +223,54 @@ views:
                       - sensor.rack_01_temperature
                       - sensor.rack_01_humidity
                       - sensor.rack_01_current
+                      - switch.rack_01_outlet1
+                      - switch.rack_01_outlet2
+                      - switch.rack_01_outlet3
+                      - switch.rack_01_outlet4
+                      - switch.rack_01_outlet5
+                      - switch.rack_01_outlet6
+                      - switch.rack_01_outlet7
+                      - switch.rack_01_outlet8
+
+      # Quick Actions Card
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## ⚡ Quick Actions
+          
+          - type: horizontal-stack
+            cards:
+              - type: button
+                name: "All OFF"
+                icon: mdi:power-off
+                tap_action:
+                  action: call-service
+                  service: script.pdu_all_outlets_off
+                  confirmation:
+                    text: "Turn OFF all outlets?"
+                    
+              - type: button
+                name: "All ON"
+                icon: mdi:power-on
+                tap_action:
+                  action: call-service
+                  service: script.pdu_all_outlets_on
+                  confirmation:
+                    text: "Turn ON all outlets?"
+                    
+              - type: button
+                name: "Sequence"
+                icon: mdi:timer-play
+                tap_action:
+                  action: call-service
+                  service: script.pdu_power_sequence
 
 # Input helpers configuration (add to configuration.yaml)
 input_text:
   pdu_outlet_config:
     name: PDU Outlet Configuration
-    initial: '{"name": "Test Outlet", "delay_on": "5", "delay_off": "10"}'
+    initial: '{"name": "Device Name", "delay_on": "5", "delay_off": "10"}'
     max: 255
 
 input_number:
@@ -238,6 +290,20 @@ input_number:
     step: 1
     unit_of_measurement: "°C"
 
+input_select:
+  pdu_outlet_number:
+    name: PDU Outlet Number
+    options:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+    initial: "1"
+
 # Automation examples
 automation:
   - id: pdu_high_temperature_alert
@@ -253,50 +319,70 @@ automation:
           title: "PDU Temperature Alert"
           message: "PDU temperature is {{ states('sensor.rack_01_temperature') }}°C"
           
-  - id: pdu_outlet_1_schedule
-    alias: "PDU Outlet 1 Schedule"
+  - id: pdu_high_current_alert
+    alias: "PDU High Current Alert"
     trigger:
-      - platform: time
-        at: "08:00:00"
+      - platform: numeric_state
+        entity_id: sensor.rack_01_current
+        above: 14
     action:
-      - service: switch.turn_on
-        entity_id: switch.rack_01_outlet1
-        
-  - id: pdu_outlet_8_schedule
-    alias: "PDU Outlet 8 Schedule"
-    trigger:
-      - platform: time
-        at: "20:00:00"
-    action:
-      - service: switch.turn_off
-        entity_id: switch.rack_01_outlet8
+      - service: notify.notify
+        data:
+          title: "PDU Current Alert"
+          message: "PDU current draw is {{ states('sensor.rack_01_current') }}A"
 
 # Script examples
 script:
-  pdu_safe_test_sequence:
-    alias: "PDU Safe Test Sequence"
+  pdu_all_outlets_off:
+    alias: "PDU All Outlets OFF"
     sequence:
       - service: switch.turn_off
-        entity_id: switch.rack_01_outlet1
-      - delay: "00:00:05"
-      - service: switch.turn_on
-        entity_id: switch.rack_01_outlet1
-      - delay: "00:00:05"
-      - service: switch.turn_off
-        entity_id: switch.rack_01_outlet8
-      - delay: "00:00:05"
-      - service: switch.turn_on
-        entity_id: switch.rack_01_outlet8
-        
-  pdu_configure_outlet_1:
-    alias: "Configure Outlet 1"
+        entity_id:
+          - switch.rack_01_outlet1
+          - switch.rack_01_outlet2
+          - switch.rack_01_outlet3
+          - switch.rack_01_outlet4
+          - switch.rack_01_outlet5
+          - switch.rack_01_outlet6
+          - switch.rack_01_outlet7
+          - switch.rack_01_outlet8
+          
+  pdu_all_outlets_on:
+    alias: "PDU All Outlets ON"
     sequence:
-      - service: mqtt.publish
-        data:
-          topic: "pdu/rack_01/outlet/1/config/set"
-          payload: >
-            {
-              "name": "Test Server",
-              "delay_on": "10",
-              "delay_off": "5"
-            } 
+      - service: switch.turn_on
+        entity_id:
+          - switch.rack_01_outlet1
+          - switch.rack_01_outlet2
+          - switch.rack_01_outlet3
+          - switch.rack_01_outlet4
+          - switch.rack_01_outlet5
+          - switch.rack_01_outlet6
+          - switch.rack_01_outlet7
+          - switch.rack_01_outlet8
+          
+  pdu_power_sequence:
+    alias: "PDU Power Sequence"
+    sequence:
+      - repeat:
+          count: 8
+          sequence:
+            - service: switch.turn_on
+              entity_id: "switch.rack_01_outlet{{ repeat.index }}"
+            - delay: "00:00:05"
+            
+  pdu_configure_all_outlets:
+    alias: "Configure All PDU Outlets"
+    sequence:
+      - repeat:
+          count: 8
+          sequence:
+            - service: mqtt.publish
+              data:
+                topic: "pdu/rack_01/outlet/{{ repeat.index }}/config/set"
+                payload: >
+                  {
+                    "name": "Device {{ repeat.index }}",
+                    "delay_on": "{{ 5 * repeat.index }}",
+                    "delay_off": "5"
+                  } 

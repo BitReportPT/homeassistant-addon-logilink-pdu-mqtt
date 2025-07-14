@@ -28,8 +28,9 @@ Ir a **Developer Tools** → **States** e procurar por:
 ### 3. Teste via Dashboard
 
 1. Adicionar o dashboard completo (copiar de `examples/complete_dashboard.yaml`)
-2. Só testar outlets 1 e 8!
+2. Todos os 8 outlets estão funcionais no dashboard
 3. Clicar nos botões deve ligar/desligar as tomadas
+4. Use com cuidado se tiver equipamentos importantes ligados!
 
 ### 4. Teste via MQTT (linha de comando)
 
