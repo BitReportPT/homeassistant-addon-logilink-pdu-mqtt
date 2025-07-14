@@ -14,8 +14,6 @@ RUN pip3 install --no-cache-dir \
 # Copy Python files
 COPY run.py /
 COPY pdu.py /
-COPY pdu_manager.py /
-COPY mqtt_bridge.py /
 COPY discover_pdus.py /
 
 # Set working directory

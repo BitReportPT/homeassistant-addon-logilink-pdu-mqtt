@@ -270,7 +270,7 @@ def main():
             )
             logger.info(f"Created PDU instance for {pdu_name}")
         
-        logger.info(f"Starting PDU MQTT Bridge v1.3.0")
+        logger.info(f"Starting PDU MQTT Bridge v1.3.1")
         logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
         logger.info(f"PDUs: {list(pdu_instances.keys())}")
         
