@@ -141,20 +141,16 @@ def publish_status(pdu_name, pdu):
                     mqtt_state = "ON" if state == 'on' else "OFF"
                     client.publish(state_topic, mqtt_state, retain=True)
                     logger.debug(f"Published {state_topic} = {mqtt_state}")
-                
             # Publish sensor data
             if 'tempBan' in status and status['tempBan']:
                 temp_topic = f"{mqtt_topic}/{pdu_name}/sensor/temperature"
                 client.publish(temp_topic, status['tempBan'], retain=True)
-                
             if 'humBan' in status and status['humBan']:
                 hum_topic = f"{mqtt_topic}/{pdu_name}/sensor/humidity"
                 client.publish(hum_topic, status['humBan'], retain=True)
-                
             if 'curBan' in status and status['curBan']:
                 cur_topic = f"{mqtt_topic}/{pdu_name}/sensor/current"
                 client.publish(cur_topic, status['curBan'], retain=True)
-                
             # Publish device info
             device_info = {
                 "model": "LogiLink PDU8P01",
@@ -163,7 +159,6 @@ def publish_status(pdu_name, pdu):
             }
             client.publish(f"{mqtt_topic}/{pdu_name}/device/info", 
                          json.dumps(device_info), retain=True)
-                
             logger.info(f"Status published for PDU {pdu_name} - {len(status.get('outlets', []))} outlets")
         else:
             logger.warning(f"No status data received from PDU: {pdu_name}")
@@ -183,11 +178,12 @@ def send_discovery_messages():
             switch_config = {
                 "name": f"Outlet {i}",
                 "unique_id": f"{pdu_name}_outlet{i}",
-                "object_id": f"{pdu_name}_outlet{i}",
+                "object_id": f"outlet{i}",
                 "command_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/set",
                 "state_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/state",
                 "payload_on": "ON",
                 "payload_off": "OFF",
+                "device_class": "outlet",
                 "device": {
                     "identifiers": [f"pdu_{pdu_name}"],
                     "name": f"PDU {pdu_name}",
