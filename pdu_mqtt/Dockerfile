@@ -6,9 +6,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
+# Copy all application files
 COPY run.py .
 COPY pdu.py .
+COPY pdu_manager.py .
+COPY mqtt_bridge.py .
 COPY discover_pdus.py .
 
 # Create non-root user for security

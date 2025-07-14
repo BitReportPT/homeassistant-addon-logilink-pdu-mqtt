@@ -1,157 +1,127 @@
 #!/usr/bin/env python3
 """
-PDU MQTT Bridge - Main Application
-Professional Home Assistant add-on for PDU control and monitoring
+PDU MQTT Bridge - Simple version based on v1.1
 """
 
-import asyncio
-import json
-import logging
+import time
 import os
-import signal
+import json
+import paho.mqtt.client as mqtt
+import logging
 import sys
-from typing import Dict, Any
-
-from pdu_manager import PDUManager
-from mqtt_bridge import MQTTBridge
+from pdu import PDU
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('/var/log/pdu_bridge.log')
-    ]
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
 
-class PDUApplication:
-    """Main application class"""
-    
-    def __init__(self):
-        self.config = self._load_config()
-        self.pdu_manager = None
-        self.mqtt_bridge = None
-        self.running = False
-        
-    def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from environment variables"""
-        config = {
-            "mqtt": {
-                "host": os.getenv("MQTT_HOST", "localhost"),
-                "port": int(os.getenv("MQTT_PORT", "1883")),
-                "username": os.getenv("MQTT_USERNAME", ""),
-                "password": os.getenv("MQTT_PASSWORD", ""),
-                "topic_prefix": os.getenv("MQTT_TOPIC_PREFIX", "pdu"),
-                "discovery_prefix": os.getenv("MQTT_DISCOVERY_PREFIX", "homeassistant"),
-                "retain": os.getenv("MQTT_RETAIN", "true").lower() == "true"
-            },
-            "pdus": json.loads(os.getenv("PDUS", "[]")),
-            "discovery": {
-                "enabled": os.getenv("DISCOVERY_ENABLED", "false").lower() == "true",
-                "network": os.getenv("DISCOVERY_NETWORK", "192.168.1"),
-                "scan_interval": int(os.getenv("DISCOVERY_SCAN_INTERVAL", "300")),
-                "credentials": json.loads(os.getenv("DISCOVERY_CREDENTIALS", '[]'))
-            },
-            "advanced": {
-                "log_level": os.getenv("LOG_LEVEL", "INFO"),
-                "health_check": os.getenv("HEALTH_CHECK", "true").lower() == "true",
-                "parallel_requests": int(os.getenv("PARALLEL_REQUESTS", "5")),
-                "timeout": int(os.getenv("TIMEOUT", "10")),
-                "retry_attempts": int(os.getenv("RETRY_ATTEMPTS", "3"))
-            }
-        }
-        
-        # Set log level
-        logging.getLogger().setLevel(getattr(logging, config["advanced"]["log_level"]))
-        
-        logger.info("Configuration loaded")
-        logger.debug(f"Config: {json.dumps(config, indent=2)}")
-        
-        return config
-    
-    async def initialize(self):
-        """Initialize the application"""
-        logger.info("Initializing PDU MQTT Bridge...")
-        
-        try:
-            # Initialize PDU manager
-            self.pdu_manager = PDUManager(self.config)
-            await self.pdu_manager.initialize_pdus()
-            
-            if not self.pdu_manager.pdus:
-                logger.error("No PDUs were initialized. Exiting.")
-                return False
-            
-            # Initialize MQTT bridge
-            self.mqtt_bridge = MQTTBridge(self.config, self.pdu_manager)
-            await self.mqtt_bridge.initialize()
-            
-            logger.info(f"Initialized {len(self.pdu_manager.pdus)} PDU(s)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Initialization failed: {e}")
-            return False
-    
-    async def start(self):
-        """Start the application"""
-        if not await self.initialize():
-            return
-        
-        self.running = True
-        logger.info("Starting PDU MQTT Bridge...")
-        
-        # Set up signal handlers
-        for sig in (signal.SIGTERM, signal.SIGINT):
-            signal.signal(sig, self._signal_handler)
-        
-        try:
-            # Start monitoring and publishing tasks
-            tasks = [
-                asyncio.create_task(self.pdu_manager.start_monitoring()),
-                asyncio.create_task(self.mqtt_bridge.start_publishing())
-            ]
-            
-            # Wait for tasks to complete
-            await asyncio.gather(*tasks)
-            
-        except asyncio.CancelledError:
-            logger.info("Application cancelled")
-        except Exception as e:
-            logger.error(f"Application error: {e}")
-        finally:
-            await self.cleanup()
-    
-    def _signal_handler(self, signum, frame):
-        """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, shutting down...")
-        self.running = False
-        self.pdu_manager.stop_monitoring()
-    
-    async def cleanup(self):
-        """Cleanup resources"""
-        logger.info("Cleaning up...")
-        
-        if self.pdu_manager:
-            await self.pdu_manager.cleanup()
-        
-        if self.mqtt_bridge:
-            self.mqtt_bridge.disconnect()
-        
-        logger.info("Cleanup completed")
+# Get configuration from environment variables
+mqtt_host = os.getenv('MQTT_HOST', 'localhost')
+mqtt_port = int(os.getenv('MQTT_PORT', 1883))
+mqtt_user = os.getenv('MQTT_USER')
+mqtt_password = os.getenv('MQTT_PASSWORD')
+mqtt_topic = os.getenv('MQTT_TOPIC', 'pdu')
+pdu_list = json.loads(os.getenv('PDU_LIST', '[]'))
 
-async def main():
-    """Main entry point"""
-    app = PDUApplication()
-    await app.start()
+# MQTT client setup
+client = mqtt.Client()
+if mqtt_user and mqtt_password:
+    client.username_pw_set(mqtt_user, mqtt_password)
+
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        logger.info("Connected to MQTT broker")
+        # Subscribe to control topics
+        for pdu_config in pdu_list:
+            pdu_name = pdu_config['name']
+            for i in range(8):
+                topic = f"{mqtt_topic}/{pdu_name}/outlet{i+1}/set"
+                client.subscribe(topic)
+                logger.info(f"Subscribed to {topic}")
+    else:
+        logger.error(f"Failed to connect to MQTT broker, return code {rc}")
+
+def on_message(client, userdata, msg):
+    try:
+        topic_parts = msg.topic.split('/')
+        if len(topic_parts) >= 4 and topic_parts[-1] == 'set':
+            pdu_name = topic_parts[-3]
+            outlet_str = topic_parts[-2]
+            outlet_num = int(outlet_str.replace('outlet', ''))
+            command = msg.payload.decode().lower()
+            
+            logger.info(f"Received command: {pdu_name} {outlet_str} -> {command}")
+            
+            # Find PDU config
+            pdu_config = next((p for p in pdu_list if p['name'] == pdu_name), None)
+            if pdu_config:
+                pdu = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
+                if command == 'on':
+                    pdu.set_outlet(outlet_num, True)
+                elif command == 'off':
+                    pdu.set_outlet(outlet_num, False)
+                    
+    except Exception as e:
+        logger.error(f"Error processing command: {e}")
+
+def publish_status(pdu_name, pdu):
+    """Publish PDU status to MQTT"""
+    try:
+        status = pdu.status()
+        if status:
+            # Publish outlet states
+            for i in range(8):
+                outlet = f"outlet{i+1}"
+                state = status['outlets'][i] if i < len(status['outlets']) else 'off'
+                client.publish(f"{mqtt_topic}/{pdu_name}/{outlet}", state, retain=True)
+            
+            # Publish sensor data
+            if 'tempBan' in status and status['tempBan']:
+                client.publish(f"{mqtt_topic}/{pdu_name}/temperature", status['tempBan'], retain=True)
+            if 'humBan' in status and status['humBan']:
+                client.publish(f"{mqtt_topic}/{pdu_name}/humidity", status['humBan'], retain=True)
+            if 'curBan' in status and status['curBan']:
+                client.publish(f"{mqtt_topic}/{pdu_name}/current", status['curBan'], retain=True)
+                
+    except Exception as e:
+        logger.error(f"Error publishing status for {pdu_name}: {e}")
+
+def main():
+    logger.info("Starting PDU MQTT Bridge v1.1")
+    logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
+    logger.info(f"PDUs: {[p['name'] for p in pdu_list]}")
+    
+    # Set up MQTT callbacks
+    client.on_connect = on_connect
+    client.on_message = on_message
+    
+    # Connect to MQTT broker
+    try:
+        client.connect(mqtt_host, mqtt_port, 60)
+        client.loop_start()
+        
+        # Main loop
+        while True:
+            for pdu_config in pdu_list:
+                try:
+                    pdu = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
+                    publish_status(pdu_config['name'], pdu)
+                except Exception as e:
+                    logger.error(f"Error with PDU {pdu_config['name']}: {e}")
+            
+            time.sleep(30)  # Update every 30 seconds
+            
+    except KeyboardInterrupt:
+        logger.info("Shutting down...")
+    except Exception as e:
+        logger.error(f"Application error: {e}")
+    finally:
+        client.loop_stop()
+        client.disconnect()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("Application interrupted by user")
-    except Exception as e:
-        logger.error(f"Application failed: {e}")
-        sys.exit(1)
+    main()
