@@ -27,6 +27,7 @@ def load_config():
         with open('/data/options.json', 'r') as f:
             options = json.load(f)
         logger.info("Loaded configuration from Home Assistant options")
+        logger.info(f"Raw options: {json.dumps(options, indent=2)}")
         return options
     except FileNotFoundError:
         logger.warning("Options file not found, using environment variables")
@@ -51,6 +52,17 @@ mqtt_user = config.get('mqtt_user', '')
 mqtt_password = config.get('mqtt_password', '')
 mqtt_topic = config.get('mqtt_topic', 'pdu')
 pdu_list = config.get('pdu_list', [])
+
+# Debug logging
+logger.info(f"Configuration loaded:")
+logger.info(f"  mqtt_host: {mqtt_host}")
+logger.info(f"  mqtt_port: {mqtt_port}")
+logger.info(f"  mqtt_user: {mqtt_user}")
+logger.info(f"  mqtt_password: {'*' * len(mqtt_password) if mqtt_password else 'None'}")
+logger.info(f"  mqtt_topic: {mqtt_topic}")
+logger.info(f"  pdu_list: {pdu_list}")
+logger.info(f"  pdu_list type: {type(pdu_list)}")
+logger.info(f"  pdu_list length: {len(pdu_list) if pdu_list else 0}")
 
 # MQTT client setup
 client = mqtt.Client()
