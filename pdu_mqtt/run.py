@@ -174,11 +174,11 @@ def send_discovery_messages():
         
         # Create discovery for each outlet switch
         for i in range(1, 9):
-            # Switch discovery
+            entity_id = f"{pdu_name}_outlet{i}"
             switch_config = {
                 "name": f"Outlet {i}",
-                "unique_id": f"{pdu_name}_outlet{i}",
-                "object_id": f"outlet{i}",
+                "unique_id": entity_id,
+                "object_id": entity_id,
                 "command_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/set",
                 "state_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/state",
                 "payload_on": "ON",
@@ -191,10 +191,9 @@ def send_discovery_messages():
                     "manufacturer": "LogiLink"
                 }
             }
-            
-            discovery_topic = f"{discovery_prefix}/switch/{pdu_name}_outlet{i}/config"
+            discovery_topic = f"{discovery_prefix}/switch/{entity_id}/config"
             client.publish(discovery_topic, json.dumps(switch_config), retain=True)
-            logger.debug(f"Published discovery for switch.{pdu_name}_outlet{i}")
+            logger.debug(f"Published discovery for switch.{entity_id}")
         
         # Create discovery for sensors
         sensors = [
