@@ -1,7 +1,7 @@
 name: Logilink PDU8P01 Home Assistant addon
-version: "1.1"
+version: "1.2-beta"
 slug: pdu_mqtt
-description: "MQTT bridge for multiple Logilink PDU8P01"
+description: "MQTT bridge for multiple Logilink PDU8P01 - BETA VERSION"
 arch:
   - amd64
   - aarch64
@@ -15,17 +15,23 @@ options:
   mqtt_user: "mqttuser"
   mqtt_password: "mqttpass"
   mqtt_topic: "pdu"
+  auto_discovery: false
+  discovery_network: "192.168.1"
   pdu_list:
-    - name: rack_01
-      host: "192.168.1.100"
+    - name: "rack_01"
+      host: "192.168.1.215"
       username: "admin"
       password: "admin"
+  log_level: "INFO"
 schema:
   mqtt_host: str
-  mqtt_port: int
+  mqtt_port: int(1, 65535)
   mqtt_user: str
   mqtt_password: str
   mqtt_topic: str
+  auto_discovery: bool
+  discovery_network: str
+  log_level: list(DEBUG|INFO|WARNING|ERROR)
   pdu_list:
     - name: str
       host: str
