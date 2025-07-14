@@ -1,0 +1,22 @@
+#!/usr/bin/with-contenv bashio
+
+# ==============================================================================
+# LogiLink & Intellinet PDU MQTT Bridge
+# Starts the PDU MQTT Bridge service
+# ==============================================================================
+
+bashio::log.info "Starting LogiLink & Intellinet PDU MQTT Bridge..."
+
+# Check if configuration exists
+if ! bashio::fs.file_exists '/data/options.json'; then
+    bashio::log.error "Configuration file not found!"
+    exit 1
+fi
+
+# Parse configuration
+CONFIG_PATH=/data/options.json
+bashio::log.info "Using configuration: ${CONFIG_PATH}"
+
+# Start the Python application
+cd /
+exec python3 run.py 

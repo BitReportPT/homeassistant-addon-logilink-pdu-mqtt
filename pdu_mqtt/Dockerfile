@@ -1,24 +1,24 @@
-FROM python:3.11-slim
+ARG BUILD_FROM
+FROM $BUILD_FROM
 
-WORKDIR /app
+# Install requirements for add-on
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    py3-requests \
+    py3-paho-mqtt
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Python 3 HTTP library
+RUN pip3 install --no-cache-dir requests paho-mqtt
 
-# Copy all application files
-COPY run.py .
-COPY pdu.py .
-COPY pdu_manager.py .
-COPY mqtt_bridge.py .
-COPY discover_pdus.py .
+# Copy data for add-on
+COPY run.py /
+COPY pdu.py /
+COPY pdu_manager.py /
+COPY mqtt_bridge.py /
+COPY discover_pdus.py /
+COPY run.sh /
 
-# Create non-root user for security
-RUN useradd -m -u 1000 pduuser && chown -R pduuser:pduuser /app
-USER pduuser
+RUN chmod a+x /run.sh
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8123', timeout=5)" || exit 1
-
-CMD ["python", "run.py"]
+CMD [ "/run.sh" ]
