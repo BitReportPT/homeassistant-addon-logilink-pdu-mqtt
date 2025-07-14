@@ -13,7 +13,7 @@ from pdu import PDU
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stdout)]
 )
@@ -107,24 +107,36 @@ def on_message(client, userdata, msg):
         logger.error(f"Error processing message {topic}: {e}")
 
 def publish_status(pdu_name, pdu):
-    """Publish PDU status to MQTT"""
+    """Publish status for all outlets of a PDU"""
     try:
+        logger.debug(f"Publishing status for PDU: {pdu_name}")
         status = pdu.status()
         if status:
-            # Publish outlet states
-            for i in range(8):
-                outlet = f"outlet{i+1}"
-                state = status['outlets'][i] if i < len(status['outlets']) else 'off'
-                client.publish(f"{mqtt_topic}/{pdu_name}/{outlet}/state", "ON" if state == 'on' else "OFF", retain=True)
-            
-            # Publish sensor data
-            if 'tempBan' in status and status['tempBan']:
-                client.publish(f"{mqtt_topic}/{pdu_name}/temperature", status['tempBan'], retain=True)
-            if 'humBan' in status and status['humBan']:
-                client.publish(f"{mqtt_topic}/{pdu_name}/humidity", status['humBan'], retain=True)
-            if 'curBan' in status and status['curBan']:
-                client.publish(f"{mqtt_topic}/{pdu_name}/current", status['curBan'], retain=True)
+            # Check if we have outlets data
+            if 'outlets' in status:
+                for i, state in enumerate(status['outlets']):
+                    outlet_num = i + 1
+                    state_topic = f"{mqtt_topic}/{pdu_name}/outlet{outlet_num}/state"
+                    mqtt_state = "ON" if state == 'on' else "OFF"
+                    client.publish(state_topic, mqtt_state, retain=True)
+                    logger.debug(f"Published {state_topic} = {mqtt_state}")
                 
+            # Publish sensor data if available
+            if 'tempBan' in status and status['tempBan']:
+                temp_topic = f"{mqtt_topic}/{pdu_name}/temperature"
+                client.publish(temp_topic, status['tempBan'], retain=True)
+                
+            if 'humBan' in status and status['humBan']:
+                hum_topic = f"{mqtt_topic}/{pdu_name}/humidity"
+                client.publish(hum_topic, status['humBan'], retain=True)
+                
+            if 'curBan' in status and status['curBan']:
+                cur_topic = f"{mqtt_topic}/{pdu_name}/current"
+                client.publish(cur_topic, status['curBan'], retain=True)
+                
+            logger.info(f"Status published for PDU {pdu_name} - {len(status.get('outlets', []))} outlets")
+        else:
+            logger.warning(f"No status data received from PDU: {pdu_name}")
     except Exception as e:
         logger.error(f"Error publishing status for {pdu_name}: {e}")
 
@@ -158,7 +170,7 @@ def main():
         pdu_instances[pdu_name] = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
         logger.info(f"Created PDU instance for {pdu_name}")
     
-    logger.info(f"Starting PDU MQTT Bridge v1.1.9")
+    logger.info(f"Starting PDU MQTT Bridge v1.1.5")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
     logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
     logger.info(f"PDUs: {[pdu['name'] for pdu in pdu_list]}")
