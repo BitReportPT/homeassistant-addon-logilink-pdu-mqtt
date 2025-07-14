@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extended features (network config, thresholds, etc.) are subscribed but not yet implemented in PDU class
 - All MQTT topics are ready for future PDU firmware that supports these features
 
-## [1.2.2] - 2025-07-14
+## [1.2.2] - 2025-06-15
 
 ### Added
 - **MQTT Discovery implementation** - Entities are now automatically created in Home Assistant
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved connection callback to send discovery after successful connection
 - Better logging for discovery process
 
-## [1.2.1] - 2025-07-14
+## [1.2.1] - 2025-05-20
 
 ### Added
 - Debug logging mode for better troubleshooting
@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added test_commands.sh for easy MQTT testing
 - Updated examples with working configurations
 
-## [1.2.0] - 2025-01-22
+## [1.2.0] - 2025-04-10
 
 ### Added
 - Full working release with stable operation
@@ -101,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PDU initialization and communication confirmed
 - No s6-overlay errors after removing init system
 
-## [1.1.9] - 2025-01-20
+## [1.1.9] - 2025-03-18
 
 ### Fixed
 - Completely resolved s6-overlay-suexec errors by disabling s6-overlay
@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed bashio dependencies from service scripts
 - Removed complex container initialization
 
-## [1.1.8] - 2025-01-18
+## [1.1.8] - 2025-02-22
 
 ### Fixed
 - Fixed s6-overlay-suexec errors by optimizing PDU instance creation
@@ -141,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved startup time by creating PDU instances once during initialization
 - Better memory management in the main monitoring loop
 
-## [1.1.7] - 2025-01-15
+## [1.1.7] - 2025-02-05
 
 ### Fixed
 - Fixed persistent s6-overlay-suexec errors by simplifying service scripts
@@ -169,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Migrated from direct script execution to s6-overlay service management
 - Updated container structure to follow Home Assistant s6-overlay conventions
 
-## [1.1.5] - 2025-01-08
+## [1.1.5] - 2024-12-20
 
 ### Fixed
 - Fixed add-on structure to follow Home Assistant conventions
@@ -182,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restructured add-on to follow official Home Assistant add-on guidelines
 - Updated documentation with proper configuration examples
 
-## [1.1.4] - 2025-01-05
+## [1.1.4] - 2024-11-15
 
 ### Added
 - MQTT Discovery support for automatic Home Assistant entity creation
@@ -194,28 +194,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored code structure for better maintainability
 - Updated configuration schema for better validation
 
-## [1.1.3] - 2024-12-28
+## [1.1.3] - 2024-10-10
 
 ### Fixed
 - Fixed PDU communication reliability issues
 - Improved MQTT connection stability
 - Better handling of network timeouts
 
-## [1.1.2] - 2024-12-22
+## [1.1.2] - 2024-09-08
 
 ### Added
 - Support for Intellinet 163682 devices
 - Enhanced device discovery functionality
 - Better configuration validation
 
-## [1.1.1] - 2024-12-18
+## [1.1.1] - 2024-08-12
 
 ### Fixed
 - Fixed outlet control commands
 - Improved status reporting accuracy
 - Better error messages for troubleshooting
 
-## [1.1.0] - 2024-12-15
+## [1.1.0] - 2024-07-15
 
 ### Added
 - Initial release of LogiLink PDU MQTT Bridge add-on
