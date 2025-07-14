@@ -50,24 +50,18 @@ def on_connect(client, userdata, flags, rc, properties=None):
     """MQTT connection callback (API v2)"""
     if rc == 0:
         logger.info("Connected to MQTT broker")
-        # Subscribe to control topics
-        for pdu_config in pdu_list:
-            for i in range(8):
-                topic = f"{mqtt_topic}/{pdu_config['name']}/outlet{i+1}/set"
+        
+        # Subscribe to control topics for all PDUs
+        for pdu_name in pdu_instances.keys():
+            for i in range(1, 9):
+                topic = f"{mqtt_topic}/{pdu_name}/outlet{i}/set"
                 client.subscribe(topic)
                 logger.info(f"Subscribed to {topic}")
+        
+        # Send MQTT Discovery messages
+        send_discovery_messages()
     else:
-        logger.error(f"Failed to connect to MQTT broker, return code {rc}")
-        if rc == 1:
-            logger.error("MQTT Error: Incorrect protocol version")
-        elif rc == 2:
-            logger.error("MQTT Error: Invalid client identifier")
-        elif rc == 3:
-            logger.error("MQTT Error: Server unavailable")
-        elif rc == 4:
-            logger.error("MQTT Error: Bad username or password")
-        elif rc == 5:
-            logger.error("MQTT Error: Authentication failed - check username/password")
+        logger.error(f"Failed to connect to MQTT broker: {rc}")
 
 def on_disconnect(client, userdata, rc, properties=None):
     """MQTT disconnection callback (API v2)"""
@@ -140,6 +134,63 @@ def publish_status(pdu_name, pdu):
     except Exception as e:
         logger.error(f"Error publishing status for {pdu_name}: {e}")
 
+def send_discovery_messages():
+    """Send Home Assistant MQTT Discovery messages"""
+    discovery_prefix = "homeassistant"
+    
+    for pdu_name in pdu_instances.keys():
+        logger.info(f"Sending discovery messages for {pdu_name}")
+        
+        # Create discovery for each outlet switch
+        for i in range(1, 9):
+            # Switch discovery
+            switch_config = {
+                "name": f"{pdu_name} Outlet {i}",
+                "unique_id": f"{pdu_name}_outlet{i}",
+                "command_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/set",
+                "state_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/state",
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "device": {
+                    "identifiers": [f"pdu_{pdu_name}"],
+                    "name": f"PDU {pdu_name}",
+                    "model": "LogiLink PDU8P01",
+                    "manufacturer": "LogiLink"
+                }
+            }
+            
+            discovery_topic = f"{discovery_prefix}/switch/{pdu_name}_outlet{i}/config"
+            client.publish(discovery_topic, json.dumps(switch_config), retain=True)
+            logger.debug(f"Published discovery for switch.{pdu_name}_outlet{i}")
+        
+        # Create discovery for sensors
+        sensors = [
+            ("temperature", "Temperature", "°C", "temperature"),
+            ("humidity", "Humidity", "%", "humidity"),
+            ("current", "Current", "A", "current")
+        ]
+        
+        for sensor_id, name, unit, device_class in sensors:
+            sensor_config = {
+                "name": f"{pdu_name} {name}",
+                "unique_id": f"{pdu_name}_{sensor_id}",
+                "state_topic": f"{mqtt_topic}/{pdu_name}/sensor/{sensor_id}",
+                "unit_of_measurement": unit,
+                "device_class": device_class,
+                "device": {
+                    "identifiers": [f"pdu_{pdu_name}"],
+                    "name": f"PDU {pdu_name}",
+                    "model": "LogiLink PDU8P01",
+                    "manufacturer": "LogiLink"
+                }
+            }
+            
+            discovery_topic = f"{discovery_prefix}/sensor/{pdu_name}_{sensor_id}/config"
+            client.publish(discovery_topic, json.dumps(sensor_config), retain=True)
+            logger.debug(f"Published discovery for sensor.{pdu_name}_{sensor_id}")
+    
+    logger.info("MQTT Discovery messages sent")
+
 def main():
     global client, mqtt_topic, pdu_list, pdu_instances
     
@@ -170,7 +221,7 @@ def main():
         pdu_instances[pdu_name] = PDU(pdu_config['host'], pdu_config['username'], pdu_config['password'])
         logger.info(f"Created PDU instance for {pdu_name}")
     
-    logger.info(f"Starting PDU MQTT Bridge v1.2.1")
+    logger.info(f"Starting PDU MQTT Bridge v1.2.2")
     logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
     logger.info(f"MQTT User: {mqtt_user if mqtt_user else 'None'}")
     logger.info(f"PDUs: {[pdu['name'] for pdu in pdu_list]}")

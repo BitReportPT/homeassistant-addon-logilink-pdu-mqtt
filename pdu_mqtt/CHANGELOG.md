@@ -5,6 +5,22 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-07-14
+
+### Added
+- **MQTT Discovery implementation** - Entities are now automatically created in Home Assistant
+- Discovery messages sent on connection for all switches and sensors
+- Each outlet creates a switch entity (switch.rack_01_outlet1, etc.)
+- Sensor entities for temperature, humidity, and current
+
+### Fixed
+- Fixed "Entity not found" issue in dashboard
+- Entities are now properly registered with Home Assistant
+
+### Changed
+- Improved connection callback to send discovery after successful connection
+- Better logging for discovery process
+
 ## [1.2.1] - 2025-07-14
 
 ### Added
