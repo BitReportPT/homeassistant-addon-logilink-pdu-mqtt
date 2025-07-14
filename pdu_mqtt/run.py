@@ -171,10 +171,13 @@ def send_discovery_messages():
     
     for pdu_name in pdu_instances.keys():
         logger.info(f"Sending discovery messages for {pdu_name}")
-        
+        # Remove prefix 'pdu_' se existir
+        clean_name = pdu_name
+        if clean_name.startswith("pdu_"):
+            clean_name = clean_name[4:]
         # Create discovery for each outlet switch
         for i in range(1, 9):
-            entity_id = f"{pdu_name}_outlet{i}"
+            entity_id = f"{clean_name}_outlet{i}"
             switch_config = {
                 "name": f"Outlet {i}",
                 "unique_id": entity_id,
@@ -194,19 +197,18 @@ def send_discovery_messages():
             discovery_topic = f"{discovery_prefix}/switch/{entity_id}/config"
             client.publish(discovery_topic, json.dumps(switch_config), retain=True)
             logger.debug(f"Published discovery for switch.{entity_id}")
-        
         # Create discovery for sensors
         sensors = [
             ("temperature", "Temperature", "°C", "temperature"),
             ("humidity", "Humidity", "%", "humidity"),
             ("current", "Current", "A", "current")
         ]
-        
         for sensor_id, name, unit, device_class in sensors:
+            sensor_entity_id = f"{clean_name}_{sensor_id}"
             sensor_config = {
                 "name": f"{name}",
-                "unique_id": f"{pdu_name}_{sensor_id}",
-                "object_id": f"{pdu_name}_{sensor_id}",
+                "unique_id": sensor_entity_id,
+                "object_id": sensor_entity_id,
                 "state_topic": f"{mqtt_topic}/{pdu_name}/sensor/{sensor_id}",
                 "unit_of_measurement": unit,
                 "device_class": device_class,
@@ -217,16 +219,14 @@ def send_discovery_messages():
                     "manufacturer": "LogiLink"
                 }
             }
-            
-            discovery_topic = f"{discovery_prefix}/sensor/{pdu_name}_{sensor_id}/config"
+            discovery_topic = f"{discovery_prefix}/sensor/{sensor_entity_id}/config"
             client.publish(discovery_topic, json.dumps(sensor_config), retain=True)
-            logger.debug(f"Published discovery for sensor.{pdu_name}_{sensor_id}")
-        
+            logger.debug(f"Published discovery for sensor.{sensor_entity_id}")
         # Additional entities for extended features
         # Text sensor for device info
         text_sensor_config = {
-            "name": f"{pdu_name} Device Info",
-            "unique_id": f"{pdu_name}_device_info",
+            "name": f"{clean_name} Device Info",
+            "unique_id": f"{clean_name}_device_info",
             "state_topic": f"{mqtt_topic}/{pdu_name}/device/info",
             "device": {
                 "identifiers": [f"pdu_{pdu_name}"],
@@ -235,9 +235,8 @@ def send_discovery_messages():
                 "manufacturer": "LogiLink"
             }
         }
-        discovery_topic = f"{discovery_prefix}/sensor/{pdu_name}_device_info/config"
+        discovery_topic = f"{discovery_prefix}/sensor/{clean_name}_device_info/config"
         client.publish(discovery_topic, json.dumps(text_sensor_config), retain=True)
-    
     logger.info("MQTT Discovery messages sent")
 
 def main():
