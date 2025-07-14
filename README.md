@@ -51,7 +51,7 @@ See below for a real Home Assistant dashboard controlling a rack PDU with 8 outl
 ## 🚀 Installation (via HACS)
 
 1. Upload this repository to your GitHub:  
-   Example: `https://github.com/YOUR_USERNAME/homeassistant-addon-logilink-pdu-mqtt`
+   Example: `https://github.com/BitReportPT/homeassistant-addon-logilink-pdu-mqtt`
 
 2. In Home Assistant:
    - Go to `Settings → Add-ons → ... (top right) → Repositories`
@@ -279,3 +279,5 @@ homeassistant-addon-logilink-pdu-mqtt/
 ```
 
 **Maintained by:** BitReport.pt
+
+- For issues and feature requests, please visit the [GitHub repository](https://github.com/BitReportPT/homeassistant-addon-logilink-pdu-mqtt).
