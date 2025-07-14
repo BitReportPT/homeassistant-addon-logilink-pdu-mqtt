@@ -234,3 +234,23 @@ log_level: DEBUG
 - Added health checks
 - Enhanced debugging capabilities
 - Fixed import path issues
+
+---
+
+## 🏗️ Repository Structure
+
+This repository is optimized for Home Assistant Add-on Store compatibility with the following structure:
+
+```
+homeassistant-addon-logilink-pdu-mqtt/
+├── repository.yaml          # Repository configuration
+├── README.md               # This documentation
+├── examples/               # Configuration examples
+└── pdu_mqtt/              # Main add-on directory
+    ├── config.yaml        # Add-on configuration
+    ├── manifest.json      # Add-on manifest
+    ├── Dockerfile         # Container definition
+    └── (Python files)     # Add-on source code
+```
+
+**Maintained by:** BitReport.pt
