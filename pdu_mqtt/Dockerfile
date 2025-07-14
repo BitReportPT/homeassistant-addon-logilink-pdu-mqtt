@@ -21,6 +21,10 @@ COPY discover_pdus.py /
 # Copy service files
 COPY rootfs /
 
+# Set correct permissions for s6-overlay scripts
+RUN chmod +x /etc/services.d/pdu-mqtt/run
+RUN chmod +x /etc/services.d/pdu-mqtt/finish
+
 # Build arguments
 ARG BUILD_ARCH
 ARG BUILD_DATE

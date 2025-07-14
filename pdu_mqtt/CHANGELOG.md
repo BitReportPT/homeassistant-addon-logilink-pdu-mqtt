@@ -5,6 +5,20 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2025-01-25
+
+### Fixed
+- Fixed persistent s6-overlay-suexec errors by simplifying service scripts
+- Replaced bashio calls with standard bash commands in s6-overlay scripts
+- Added explicit chmod permissions for s6-overlay scripts in Dockerfile
+- Improved script compatibility with s6-overlay environment
+- Fixed service initialization to prevent suexec conflicts
+
+### Changed
+- Simplified s6-overlay service scripts to use standard bash instead of bashio
+- Updated service scripts to use basic echo instead of bashio logging
+- Added explicit permission setting for service scripts during build
+
 ## [1.1.6] - 2025-01-25
 
 ### Fixed
