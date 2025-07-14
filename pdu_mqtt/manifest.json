@@ -2,15 +2,15 @@
   "name": "LogiLink PDU MQTT Bridge",
   "slug": "pdu_mqtt",
   "description": "Home Assistant add-on to monitor and control LogiLink PDU8P01 (8x IEC-C13 smart PDU) via MQTT",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "startup": "application",
   "boot": "auto",
   "host_network": true,
   "options": {
     "mqtt_host": "localhost",
     "mqtt_port": 1883,
-    "mqtt_user": "mqttuser",
-    "mqtt_password": "mqttpass",
+    "mqtt_user": "",
+    "mqtt_password": "",
     "mqtt_topic": "pdu",
     "pdu_list": [
       {
@@ -24,8 +24,8 @@
   "schema": {
     "mqtt_host": "str",
     "mqtt_port": "int",
-    "mqtt_user": "str",
-    "mqtt_password": "str",
+    "mqtt_user": "str?",
+    "mqtt_password": "str?",
     "mqtt_topic": "str",
     "pdu_list": [
       {
