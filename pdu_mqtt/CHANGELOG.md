@@ -5,6 +5,16 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2025-07-15
+
+### Added
+- Added version.json file for proper Home Assistant version detection
+- Improved repository structure for better add-on store integration
+
+### Fixed
+- Fixed version detection issue in Home Assistant Supervisor
+- Repository now properly shows available updates
+
 ## [1.3.2] - 2025-07-14
 
 ### Fixed
