@@ -5,6 +5,17 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-07-14
+
+### Fixed
+- Fixed entity naming to match dashboard expectations
+- Added object_id to MQTT Discovery for consistent entity IDs
+- Entity IDs now correctly created as switch.rack_01_outlet1 (without extra underscore)
+- Dashboard entities should now be found correctly
+
+### Changed
+- Simplified entity names in discovery (removed redundant PDU name prefix)
+
 ## [1.3.1] - 2025-07-14
 
 ### Fixed

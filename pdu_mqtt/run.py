@@ -181,8 +181,9 @@ def send_discovery_messages():
         for i in range(1, 9):
             # Switch discovery
             switch_config = {
-                "name": f"{pdu_name} Outlet {i}",
+                "name": f"Outlet {i}",
                 "unique_id": f"{pdu_name}_outlet{i}",
+                "object_id": f"{pdu_name}_outlet{i}",
                 "command_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/set",
                 "state_topic": f"{mqtt_topic}/{pdu_name}/outlet{i}/state",
                 "payload_on": "ON",
@@ -208,8 +209,9 @@ def send_discovery_messages():
         
         for sensor_id, name, unit, device_class in sensors:
             sensor_config = {
-                "name": f"{pdu_name} {name}",
+                "name": f"{name}",
                 "unique_id": f"{pdu_name}_{sensor_id}",
+                "object_id": f"{pdu_name}_{sensor_id}",
                 "state_topic": f"{mqtt_topic}/{pdu_name}/sensor/{sensor_id}",
                 "unit_of_measurement": unit,
                 "device_class": device_class,
@@ -270,7 +272,7 @@ def main():
             )
             logger.info(f"Created PDU instance for {pdu_name}")
         
-        logger.info(f"Starting PDU MQTT Bridge v1.3.1")
+        logger.info(f"Starting PDU MQTT Bridge v1.3.2")
         logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
         logger.info(f"PDUs: {list(pdu_instances.keys())}")
         
