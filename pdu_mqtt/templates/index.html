@@ -547,7 +547,7 @@
             const password = document.getElementById(`pass-${ip}`).value;
             const resultDiv = document.getElementById(`test-result-${ip}`);
             
-            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Testando...</div>';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>A testar...</div>';
             
             fetch('/api/test_credentials', {
                 method: 'POST',
