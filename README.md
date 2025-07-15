@@ -241,6 +241,21 @@ log_level: DEBUG
 
 ## 📝 Changelog
 
+### v1.4.0
+- **STABLE RELEASE** - Visual PDU Discovery Interface
+- Added web interface at port 8099 for automatic PDU discovery
+- Network scanning with real-time progress visualization
+- Credential testing integrated in the interface
+- Visual configuration without manual YAML editing
+- Advanced visual dashboard with 4 themed tabs
+- Real-time monitoring with temperature/current graphs
+- Visual outlet status with color indicators
+- Group control for equipment management
+- Configurable alerts system with visual notifications
+- **MAJOR BUG FIXES:** Robust XML parsing, stable connections, rigorous validation
+- **STABILITY:** Automatic error recovery, complete configuration validation
+- **TESTED:** Fully tested in production environments
+
 ### v1.2-beta
 - **BETA RELEASE** - Marked as beta for safety
 - Added auto-discovery functionality
