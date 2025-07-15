@@ -9,6 +9,7 @@ import json
 import paho.mqtt.client as mqtt
 import logging
 import sys
+import threading
 from pdu import PDU
 from typing import Dict, Any
 
@@ -252,8 +253,17 @@ def main():
         mqtt_topic = config.get('mqtt_topic', 'pdu')
         pdu_list = config.get('pdu_list', [])
         
+        # Start web interface in background
+        logger.info("Starting PDU Discovery Web Interface...")
+        web_thread = threading.Thread(target=start_web_interface, daemon=True)
+        web_thread.start()
+        
         if not pdu_list:
-            logger.error("No PDUs configured!")
+            logger.warning("No PDUs configured yet - use the web interface to discover and configure PDUs!")
+            logger.info("Web interface available at: http://localhost:8099")
+            # Keep running even without PDUs for web interface
+            while True:
+                time.sleep(60)
             return
             
         # Create PDU instances
@@ -266,9 +276,10 @@ def main():
             )
             logger.info(f"Created PDU instance for {pdu_name}")
         
-        logger.info(f"Starting PDU MQTT Bridge v1.3.2")
+        logger.info(f"Starting PDU MQTT Bridge v1.4.0")
         logger.info(f"MQTT: {mqtt_host}:{mqtt_port}")
         logger.info(f"PDUs: {list(pdu_instances.keys())}")
+        logger.info(f"Web interface: http://localhost:8099")
         
         # Setup MQTT client
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -306,6 +317,14 @@ def main():
         if client:
             client.loop_stop()
             client.disconnect()
+
+def start_web_interface():
+    """Start the web interface for PDU discovery"""
+    try:
+        from web_interface import run_web_interface
+        run_web_interface()
+    except Exception as e:
+        logger.error(f"Failed to start web interface: {e}")
 
 if __name__ == "__main__":
     main()

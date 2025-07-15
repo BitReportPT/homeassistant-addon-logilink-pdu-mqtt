@@ -1,7 +1,7 @@
 name: LogiLink & Intellinet PDU MQTT Bridge
-version: "1.3.4"
+version: "1.4.0"
 slug: pdu_mqtt
-description: "MQTT bridge for multiple Logilink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) via MQTT"
+description: "MQTT bridge para PDUs com descoberta visual automática"
 arch:
   - amd64
   - aarch64
@@ -10,23 +10,32 @@ startup: application
 boot: auto
 init: false
 host_network: true
+webui: http://[HOST]:[PORT:8099]
+ports:
+  8099/tcp: 8099
+ports_description:
+  8099/tcp: "Interface de descoberta visual de PDUs"
 options:
   mqtt_host: "localhost"
   mqtt_port: 1883
   mqtt_user: ""
   mqtt_password: ""
   mqtt_topic: "pdu"
-  pdu_list:
-    - name: rack_01
-      host: "192.168.1.215"
-      username: "admin"
-      password: "admin"
+  auto_discovery: true
+  discovery_network: "192.168.1"
+  discovery_range_start: 1
+  discovery_range_end: 254
+  pdu_list: []
 schema:
   mqtt_host: str
   mqtt_port: int
   mqtt_user: str?
   mqtt_password: str?
   mqtt_topic: str
+  auto_discovery: bool
+  discovery_network: str
+  discovery_range_start: int
+  discovery_range_end: int
   pdu_list:
     - name: str
       host: str

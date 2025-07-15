@@ -1,4 +1,6 @@
 paho-mqtt==1.6.1
 aiohttp==3.9.1
 asyncio-mqtt==0.16.1
-requests==2.31.0 
+requests==2.31.0
+flask==2.3.3
+werkzeug==2.3.7 
