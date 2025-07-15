@@ -15,6 +15,7 @@ from xml.etree import ElementTree as ET
 import logging
 import re
 from device_detection import DeviceDiscovery
+from ha_theme_integration import ha_theme_integration
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -197,7 +198,8 @@ def index():
     """Main interface page"""
     lang = detect_language(request)
     translations = get_translations(lang)
-    return render_template('index.html', lang=lang, t=translations)
+    theme_info = ha_theme_integration.get_theme_info()
+    return render_template('index.html', lang=lang, t=translations, theme_info=theme_info)
 
 @app.route('/api/scan', methods=['POST'])
 def start_scan():
@@ -322,6 +324,49 @@ def load_config():
     except Exception as e:
         logger.error(f"Error loading config: {e}")
         return jsonify({'device_list': []})
+
+@app.route('/api/ha_theme', methods=['GET'])
+def get_ha_theme():
+    """Get Home Assistant theme information"""
+    try:
+        theme_info = ha_theme_integration.get_theme_info()
+        return jsonify(theme_info)
+    except Exception as e:
+        logger.error(f"Error getting HA theme: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/ha_theme/css', methods=['GET'])
+def get_ha_theme_css():
+    """Get Home Assistant theme CSS"""
+    try:
+        theme_name = request.args.get('theme')
+        css = ha_theme_integration.generate_css_variables(theme_name)
+        
+        response = app.response_class(
+            response=css,
+            mimetype='text/css'
+        )
+        
+        # Add caching headers
+        response.headers['Cache-Control'] = 'public, max-age=300'  # 5 minutes
+        return response
+    except Exception as e:
+        logger.error(f"Error generating theme CSS: {e}")
+        return app.response_class(
+            response=f"/* Error generating theme CSS: {e} */",
+            mimetype='text/css'
+        ), 500
+
+@app.route('/api/ha_theme/refresh', methods=['POST'])
+def refresh_ha_theme():
+    """Refresh Home Assistant theme cache"""
+    try:
+        ha_theme_integration.cached_theme = None
+        theme_info = ha_theme_integration.get_theme_info()
+        return jsonify(theme_info)
+    except Exception as e:
+        logger.error(f"Error refreshing HA theme: {e}")
+        return jsonify({'error': str(e)}), 500
 
 def run_server(host='0.0.0.0', port=8099):
     """Run the web interface server"""

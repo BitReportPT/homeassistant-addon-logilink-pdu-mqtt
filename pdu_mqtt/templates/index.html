@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ t.title }}</title>
+    
+    <!-- Dynamic Home Assistant Theme CSS -->
+    <link rel="stylesheet" href="/api/ha_theme/css{% if theme_info.theme_name != 'default' %}?theme={{ theme_info.theme_name }}{% endif %}" id="ha-theme-css">
+    
     <style>
         * {
             margin: 0;
@@ -12,24 +16,25 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--paper-font-headline_-_font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+            background: var(--primary-background-color, #fafafa);
             min-height: 100vh;
             padding: 20px;
+            color: var(--primary-text-color, #212121);
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: var(--card-background-color, white);
+            border-radius: var(--ha-card-border-radius, 15px);
+            box-shadow: var(--ha-card-box-shadow, 0 10px 30px rgba(0,0,0,0.3));
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            color: white;
+            background: var(--app-header-background-color, linear-gradient(135deg, #4CAF50 0%, #45a049 100%));
+            color: var(--app-header-text-color, white);
             padding: 30px;
             text-align: center;
         }
@@ -49,9 +54,9 @@
         }
 
         .scan-section {
-            background: #f8f9fa;
+            background: var(--secondary-background-color, #f8f9fa);
             padding: 25px;
-            border-radius: 10px;
+            border-radius: var(--ha-card-border-radius, 10px);
             margin-bottom: 30px;
         }
 
@@ -71,28 +76,30 @@
         label {
             font-weight: bold;
             margin-bottom: 5px;
-            color: #333;
+            color: var(--primary-text-color, #333);
         }
 
         input, select {
             padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            border: 2px solid var(--divider-color, #ddd);
+            border-radius: var(--ha-card-border-radius, 8px);
             font-size: 16px;
             transition: border-color 0.3s;
+            background: var(--card-background-color, white);
+            color: var(--primary-text-color, #333);
         }
 
         input:focus, select:focus {
             outline: none;
-            border-color: #4CAF50;
+            border-color: var(--primary-color, #4CAF50);
         }
 
         .btn {
             padding: 12px 25px;
-            background: #4CAF50;
-            color: white;
+            background: var(--primary-color, #4CAF50);
+            color: var(--text-primary-color, white);
             border: none;
-            border-radius: 8px;
+            border-radius: var(--ha-card-border-radius, 8px);
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
@@ -100,11 +107,11 @@
         }
 
         .btn:hover {
-            background: #45a049;
+            background: var(--accent-color, #45a049);
         }
 
         .btn:disabled {
-            background: #ccc;
+            background: var(--disabled-text-color, #ccc);
             cursor: not-allowed;
         }
 
@@ -120,7 +127,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4CAF50, #45a049);
+            background: var(--primary-color, linear-gradient(90deg, #4CAF50, #45a049));
             width: 0%;
             transition: width 0.3s;
         }
@@ -128,7 +135,7 @@
         .scan-status {
             text-align: center;
             font-size: 1.1em;
-            color: #666;
+            color: var(--secondary-text-color, #666);
             margin-bottom: 20px;
         }
 
@@ -140,21 +147,21 @@
         }
 
         .pdu-card {
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            background: var(--card-background-color, white);
+            border: 2px solid var(--divider-color, #e0e0e0);
+            border-radius: var(--ha-card-border-radius, 10px);
             padding: 20px;
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .pdu-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            box-shadow: var(--ha-card-box-shadow, 0 5px 20px rgba(0,0,0,0.1));
         }
 
         .pdu-card.configured {
-            border-color: #4CAF50;
-            background: #f8fff8;
+            border-color: var(--success-color, #4CAF50);
+            background: var(--secondary-background-color, #f8fff8);
         }
 
         .pdu-header {
@@ -167,12 +174,12 @@
         .pdu-ip {
             font-size: 1.3em;
             font-weight: bold;
-            color: #333;
+            color: var(--primary-text-color, #333);
         }
 
         .pdu-type {
-            background: #e3f2fd;
-            color: #1976d2;
+            background: var(--secondary-background-color, #e3f2fd);
+            color: var(--primary-color, #1976d2);
             padding: 5px 10px;
             border-radius: 15px;
             font-size: 0.9em;
@@ -186,6 +193,91 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            color: var(--secondary-text-color, #666);
+        }
+        
+        /* Device-specific styling */
+        .pdu-card[data-device-type="shelly"] {
+            border-color: var(--device-shelly-color, #4caf50);
+        }
+        
+        .pdu-card[data-device-type="pdu"] {
+            border-color: var(--device-pdu-color, #2196f3);
+        }
+        
+        .pdu-card[data-device-type="unknown"] {
+            border-color: var(--device-unknown-color, #9e9e9e);
+        }
+        
+        /* Dark mode support */
+        .dark-mode .progress-bar {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark-mode .scan-status {
+            color: var(--secondary-text-color, #aaa);
+        }
+        
+        /* Success/Error messages */
+        .success {
+            color: var(--success-color, #4caf50);
+            background: rgba(76, 175, 80, 0.1);
+            padding: 10px;
+            border-radius: var(--ha-card-border-radius, 8px);
+            border: 1px solid var(--success-color, #4caf50);
+        }
+        
+        .error {
+            color: var(--error-color, #f44336);
+            background: rgba(244, 67, 54, 0.1);
+            padding: 10px;
+            border-radius: var(--ha-card-border-radius, 8px);
+            border: 1px solid var(--error-color, #f44336);
+        }
+        
+        .loading {
+            color: var(--primary-color, #03a9f4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--divider-color, #e0e0e0);
+            border-top: 2px solid var(--primary-color, #03a9f4);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Theme status indicator */
+        .theme-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--card-background-color, white);
+            border: 1px solid var(--divider-color, #e0e0e0);
+            border-radius: var(--ha-card-border-radius, 8px);
+            padding: 8px 12px;
+            font-size: 0.8em;
+            color: var(--secondary-text-color, #666);
+            z-index: 1000;
+        }
+        
+        .theme-status.ha-connected {
+            border-color: var(--success-color, #4caf50);
+            color: var(--success-color, #4caf50);
+        }
+        
+        .theme-status.ha-disconnected {
+            border-color: var(--error-color, #f44336);
+            color: var(--error-color, #f44336);
         }
 
         .pdu-actions {
@@ -341,6 +433,17 @@
     </style>
 </head>
 <body>
+    <!-- Theme Status Indicator -->
+    <div class="theme-status" id="themeStatus">
+        <span id="themeStatusText">
+            {% if theme_info.ha_available %}
+                🏠 {{ theme_info.theme_name }} ({{ theme_info.ha_version }})
+            {% else %}
+                🏠 Default Theme
+            {% endif %}
+        </span>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🔍 {{ t.title }}</h1>
@@ -395,6 +498,67 @@
         
         // Translations
         const translations = {{ t|tojson }};
+        
+        // Theme info
+        const themeInfo = {{ theme_info|tojson }};
+        
+        // Theme management
+        function updateTheme() {
+            fetch('/api/ha_theme')
+                .then(response => response.json())
+                .then(data => {
+                    const themeStatus = document.getElementById('themeStatus');
+                    const themeStatusText = document.getElementById('themeStatusText');
+                    
+                    if (data.theme_name !== themeInfo.theme_name) {
+                        // Theme changed, reload CSS
+                        const cssLink = document.getElementById('ha-theme-css');
+                        const newUrl = `/api/ha_theme/css${data.theme_name !== 'default' ? `?theme=${data.theme_name}` : ''}`;
+                        cssLink.href = newUrl;
+                        themeInfo.theme_name = data.theme_name;
+                        themeInfo.is_dark = data.is_dark;
+                        
+                        // Update body class for dark mode
+                        if (data.is_dark) {
+                            document.body.classList.add('dark-mode');
+                        } else {
+                            document.body.classList.remove('dark-mode');
+                        }
+                    }
+                    
+                    // Update theme status indicator
+                    if (data.ha_available) {
+                        themeStatusText.textContent = `🏠 ${data.theme_name} (${data.ha_version})`;
+                        themeStatus.className = 'theme-status ha-connected';
+                    } else {
+                        themeStatusText.textContent = '🏠 Default Theme';
+                        themeStatus.className = 'theme-status ha-disconnected';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating theme:', error);
+                    const themeStatus = document.getElementById('themeStatus');
+                    const themeStatusText = document.getElementById('themeStatusText');
+                    themeStatusText.textContent = '🏠 Connection Error';
+                    themeStatus.className = 'theme-status ha-disconnected';
+                });
+        }
+        
+        // Check for theme updates every 30 seconds
+        setInterval(updateTheme, 30000);
+        
+        // Initial theme setup
+        if (themeInfo.is_dark) {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // Set initial theme status
+        const themeStatus = document.getElementById('themeStatus');
+        if (themeInfo.ha_available) {
+            themeStatus.className = 'theme-status ha-connected';
+        } else {
+            themeStatus.className = 'theme-status ha-disconnected';
+        }
 
         // Load existing configuration on page load
         window.addEventListener('load', loadConfiguration);
@@ -502,11 +666,13 @@
             let deviceIcon = '🔌';
             let deviceColor = '#1976d2';
             let deviceDetails = '';
+            let deviceType = 'unknown';
             
             // Set device-specific properties
             if (device.type.includes('Shelly')) {
                 deviceIcon = '💡';
-                deviceColor = '#4CAF50';
+                deviceColor = 'var(--device-shelly-color, #4CAF50)';
+                deviceType = 'shelly';
                 deviceDetails = `
                     <div class="pdu-detail">
                         <span>${translations.model}:</span>
@@ -524,11 +690,12 @@
                         <span>${translations.mqtt_available}:</span>
                         <span>${device.mqtt_available ? translations.yes : translations.no}</span>
                     </div>
-                `;
-            } else if (device.type === 'PDU') {
-                deviceIcon = '🔌';
-                deviceColor = '#1976d2';
-                deviceDetails = `
+                                 `;
+             } else if (device.type === 'PDU') {
+                 deviceIcon = '🔌';
+                 deviceColor = 'var(--device-pdu-color, #1976d2)';
+                 deviceType = 'pdu';
+                 deviceDetails = `
                     <div class="pdu-detail">
                         <span>${translations.model}:</span>
                         <span>${device.model || 'Unknown'}</span>
@@ -541,11 +708,12 @@
                         <span>${translations.auth_required}:</span>
                         <span>${device.auth_required ? translations.yes : translations.no}</span>
                     </div>
-                `;
-            } else {
-                deviceIcon = '❓';
-                deviceColor = '#666';
-                deviceDetails = `
+                                 `;
+             } else {
+                 deviceIcon = '❓';
+                 deviceColor = 'var(--device-unknown-color, #666)';
+                 deviceType = 'unknown';
+                 deviceDetails = `
                     <div class="pdu-detail">
                         <span>${translations.model}:</span>
                         <span>${device.model || 'Unknown'}</span>
@@ -555,9 +723,12 @@
                         <span>${device.compatible ? translations.yes : translations.no}</span>
                     </div>
                 `;
-            }
-            
-            card.innerHTML = `
+                         }
+             
+             // Set device type attribute for CSS styling
+             card.setAttribute('data-device-type', deviceType);
+             
+             card.innerHTML = `
                 <div class="pdu-header">
                     <span class="pdu-ip">${device.ip}</span>
                     <span class="pdu-type" style="background-color: ${deviceColor}20; color: ${deviceColor};">
