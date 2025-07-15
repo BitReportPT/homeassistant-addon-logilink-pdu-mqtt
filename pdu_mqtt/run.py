@@ -160,7 +160,7 @@ def publish_status(pdu_name, pdu):
             }
             client.publish(f"{mqtt_topic}/{pdu_name}/device/info", 
                          json.dumps(device_info), retain=True)
-            logger.info(f"Status published for PDU {pdu_name} - {len(status.get('outlets', []))} outlets")
+            logger.debug(f"Status published for PDU {pdu_name} - {len(status.get('outlets', []))} outlets")
         else:
             logger.warning(f"No status data received from PDU: {pdu_name}")
     except Exception as e:
@@ -262,7 +262,9 @@ def main():
             logger.warning("No PDUs configured yet - use the web interface to discover and configure PDUs!")
             logger.info("Web interface available at: http://localhost:8099")
             # Keep running even without PDUs for web interface
+            logger.info("Entering standby mode - waiting for PDU configuration...")
             while True:
+                logger.debug("Standby mode - sleeping for 60 seconds...")
                 time.sleep(60)
             return
             
@@ -301,13 +303,21 @@ def main():
         
         # Main loop
         while True:
-            for pdu_name, pdu in pdu_instances.items():
-                try:
-                    publish_status(pdu_name, pdu)
-                except Exception as e:
-                    logger.error(f"Error updating {pdu_name}: {e}")
-            
-            time.sleep(30)  # Update every 30 seconds
+            try:
+                for pdu_name, pdu in pdu_instances.items():
+                    try:
+                        publish_status(pdu_name, pdu)
+                    except Exception as e:
+                        logger.error(f"Error updating {pdu_name}: {e}")
+                
+                import datetime
+                current_time = datetime.datetime.now().strftime("%H:%M:%S")
+                logger.info(f"Main loop completed at {current_time}, sleeping for 30 seconds...")
+                time.sleep(30)  # Update every 30 seconds
+                
+            except Exception as e:
+                logger.error(f"Error in main loop: {e}")
+                time.sleep(30)  # Sleep even on error to prevent tight loop
             
     except KeyboardInterrupt:
         logger.info("Shutting down...")
@@ -321,10 +331,32 @@ def main():
 def start_web_interface():
     """Start the web interface for PDU discovery"""
     try:
+        import os
+        import sys
+        
+        # Check if web_interface.py exists
+        if not os.path.exists('web_interface.py'):
+            logger.warning("web_interface.py not found - web interface disabled")
+            return
+        
+        # Check if flask is available
+        try:
+            import flask
+        except ImportError:
+            logger.warning("Flask not available - web interface disabled")
+            return
+        
+        # Try to import and run web interface
         from web_interface import run_web_interface
+        logger.info("Starting web interface on port 8099...")
         run_web_interface()
+        
+    except ImportError as e:
+        logger.warning(f"Web interface module not available: {e}")
+        logger.info("Continuing without web interface...")
     except Exception as e:
         logger.error(f"Failed to start web interface: {e}")
+        logger.info("Continuing without web interface...")
 
 if __name__ == "__main__":
     main()

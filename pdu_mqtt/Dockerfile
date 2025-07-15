@@ -6,18 +6,23 @@ RUN apk add --no-cache \
     python3 \
     py3-pip
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir \
-    requests \
-    paho-mqtt
+# Set working directory
+WORKDIR /
+
+# Copy requirements first for better caching
+COPY requirements.txt /
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy Python files
 COPY run.py /
 COPY pdu.py /
 COPY discover_pdus.py /
+COPY web_interface.py /
+COPY bug_fixes.py /
 
-# Set working directory
-WORKDIR /
+# Create templates directory and copy templates
+RUN mkdir -p /templates
+COPY templates/ /templates/
 
 # Run Python directly
 CMD ["python3", "-u", "run.py"]
