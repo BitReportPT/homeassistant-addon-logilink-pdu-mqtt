@@ -1,0 +1,65 @@
+# Example configuration for mixed PDU and Shelly devices
+# This configuration shows how to use both device types in the same add-on
+
+mqtt_host: "homeassistant.local"
+mqtt_port: 1883
+mqtt_user: "mqtt_user"
+mqtt_password: "mqtt_password"
+mqtt_topic: "devices"
+auto_discovery: true
+discovery_network: "192.168.1"
+discovery_range_start: 1
+discovery_range_end: 254
+
+device_list:
+  # PDU Devices
+  - name: "server_rack_pdu"
+    host: "192.168.1.100"
+    type: "PDU"
+    username: "admin"
+    password: "admin"
+  
+  - name: "workshop_pdu"
+    host: "192.168.1.101"
+    type: "PDU"
+    username: "admin"
+    password: "admin"
+  
+  # Shelly Generation 1 Devices
+  - name: "kitchen_lights"
+    host: "192.168.1.110"
+    type: "Shelly"
+    username: ""
+    password: ""
+  
+  - name: "garage_door"
+    host: "192.168.1.111"
+    type: "Shelly"
+    username: ""
+    password: ""
+  
+  - name: "living_room_lamp"
+    host: "192.168.1.112"
+    type: "Shelly"
+    username: ""
+    password: ""
+  
+  # Shelly Generation 2 Devices
+  - name: "outdoor_lights"
+    host: "192.168.1.120"
+    type: "Shelly Gen2"
+    username: ""
+    password: ""
+  
+  - name: "water_heater"
+    host: "192.168.1.121"
+    type: "Shelly Gen2"
+    username: ""
+    password: ""
+
+# Notes:
+# - PDU devices typically require authentication (admin/admin by default)
+# - Shelly devices usually don't require authentication unless specifically configured
+# - The system will automatically detect device capabilities and create appropriate entities
+# - Both device types will appear in Home Assistant with auto-discovery
+# - You can control devices through MQTT or the web interface at port 8099

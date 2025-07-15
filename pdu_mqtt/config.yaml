@@ -1,7 +1,7 @@
-name: LogiLink & Intellinet PDU MQTT Bridge
+name: Device MQTT Bridge (PDU & Shelly)
 version: "1.4.0"
-slug: pdu_mqtt
-description: "MQTT bridge for PDUs with automatic visual discovery"
+slug: device_mqtt_bridge
+description: "MQTT bridge for PDUs and Shelly devices with visual discovery"
 arch:
   - amd64
   - aarch64
@@ -14,7 +14,7 @@ webui: http://[HOST]:[PORT:8099]
 ports:
   8099/tcp: 8099
 ports_description:
-  8099/tcp: "Interface de descoberta visual de PDUs"
+  8099/tcp: "Visual device discovery interface"
 options:
   mqtt_host: "localhost"
   mqtt_port: 1883
@@ -25,7 +25,7 @@ options:
   discovery_network: "192.168.1"
   discovery_range_start: 1
   discovery_range_end: 254
-  pdu_list: []
+  device_list: []
 schema:
   mqtt_host: str
   mqtt_port: int
@@ -36,8 +36,9 @@ schema:
   discovery_network: str
   discovery_range_start: int
   discovery_range_end: int
-  pdu_list:
+  device_list:
     - name: str
       host: str
-      username: str
-      password: str
+      type: str
+      username: str?
+      password: str?

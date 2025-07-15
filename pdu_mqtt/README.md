@@ -1,105 +1,175 @@
-# LogiLink & Intellinet PDU MQTT Bridge
+# Device MQTT Bridge (PDU & Shelly)
 
-![Supports amd64 Architecture][amd64-shield]
-![Supports aarch64 Architecture][aarch64-shield]
-![Supports armv7 Architecture][armv7-shield]
-
-[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
-[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
-[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
-
-## About
-
-This Home Assistant add-on provides MQTT integration for LogiLink PDU8P01 and Intellinet 163682 (8x IEC-C13 smart PDU) devices. It allows you to monitor and control individual power outlets through MQTT, with automatic Home Assistant discovery support.
+An advanced Home Assistant add-on that provides MQTT integration for PDUs and Shelly devices with visual discovery capabilities.
 
 ## Features
 
-- **Multi-PDU Support**: Control multiple PDU devices from a single add-on
-- **MQTT Integration**: Full MQTT support with Home Assistant auto-discovery
-- **Individual Outlet Control**: Control each of the 8 outlets independently
-- **Real-time Monitoring**: Monitor power consumption and outlet status
-- **Automatic Discovery**: Automatically creates Home Assistant entities
-- **Secure Communication**: Supports MQTT authentication
+### Device Support
+- **PDU Devices**: LogiLink PDU8P01, Intellinet 163682, and other compatible PDUs
+- **Shelly Devices**: Generation 1 and 2 devices (1PM, 4PM, Plus 1PM, Pro 4PM, etc.)
+- **Intelligent Detection**: Automatically identifies device types and capabilities
+- **False Positive Filtering**: Excludes IPTV boxes, routers, and other non-target devices
+
+### Visual Discovery Interface
+- **Multi-language Support**: English and Portuguese with automatic detection
+- **Real-time Scanning**: Network scanning with progress visualization
+- **Device Cards**: Rich information display for each discovered device
+- **Credential Testing**: Built-in connection testing for all device types
+- **Live Control**: Toggle Shelly relays directly from the interface
+
+### MQTT Integration
+- **Home Assistant Discovery**: Automatic entity creation
+- **Real-time Updates**: Live status monitoring and control
+- **Flexible Configuration**: Support for multiple device types in one configuration
+
+## Supported Devices
+
+### PDU Devices
+- LogiLink PDU8P01
+- Intellinet 163682
+- Generic PDUs with XML API
+
+### Shelly Devices
+- **Generation 1**: 1, 1PM, 2.5, 4Pro, EM, etc.
+- **Generation 2**: Plus 1, Plus 1PM, Pro 1PM, Pro 4PM, etc.
+- **Features**: Relay control, power measurement, temperature sensing
 
 ## Installation
 
 1. Add this repository to your Home Assistant Supervisor
-2. Install the "LogiLink & Intellinet PDU MQTT Bridge" add-on
-3. Configure the add-on (see configuration section below)
+2. Install the "Device MQTT Bridge" add-on
+3. Configure your MQTT broker settings
 4. Start the add-on
+5. Access the web interface at `http://homeassistant.local:8099`
 
 ## Configuration
 
-Add your PDU devices and MQTT settings to the add-on configuration:
-
+### Basic Configuration
 ```yaml
-mqtt_host: "192.168.1.241"
+mqtt_host: "localhost"
 mqtt_port: 1883
-mqtt_user: "mqttuser"
-mqtt_password: "mqttpass"
-mqtt_topic: "pdu"
-pdu_list:
-  - name: "rack_01"
-    host: "192.168.1.215"
-    username: "admin"
-    password: "admin"
+mqtt_user: ""
+mqtt_password: ""
+mqtt_topic: "devices"
+auto_discovery: true
+discovery_network: "192.168.1"
+discovery_range_start: 1
+discovery_range_end: 254
+device_list: []
 ```
 
-### Configuration Options
+### Device List Format
+The `device_list` can contain both PDUs and Shelly devices:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `mqtt_host` | string | `localhost` | MQTT broker hostname or IP address |
-| `mqtt_port` | int | `1883` | MQTT broker port |
-| `mqtt_user` | string | - | MQTT username (optional) |
-| `mqtt_password` | string | - | MQTT password (optional) |
-| `mqtt_topic` | string | `pdu` | Base MQTT topic for PDU devices |
-| `pdu_list` | list | - | List of PDU devices to control |
+```yaml
+device_list:
+  - name: "pdu_server_rack"
+    host: "192.168.1.100"
+    type: "PDU"
+    username: "admin"
+    password: "admin"
+  - name: "shelly_kitchen_lights"
+    host: "192.168.1.101"
+    type: "Shelly"
+    username: ""
+    password: ""
+```
 
-### PDU Configuration
+## Web Interface
 
-Each PDU in the `pdu_list` requires:
+The visual discovery interface provides:
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `name` | string | Unique identifier for the PDU |
-| `host` | string | PDU IP address or hostname |
-| `username` | string | PDU web interface username |
-| `password` | string | PDU web interface password |
+1. **Network Scanning**: Automatic discovery of devices on your network
+2. **Device Information**: Detailed information about each discovered device
+3. **Credential Testing**: Verify connection to devices before adding them
+4. **Live Control**: Control Shelly devices directly from the interface
+5. **Configuration Management**: Add/remove devices from your configuration
 
-## Usage
+### Device Detection
 
-Once configured and started, the add-on will:
+The system intelligently identifies:
 
-1. Connect to your MQTT broker
-2. Discover configured PDU devices
-3. Create Home Assistant entities for each outlet
-4. Publish device status and accept control commands via MQTT
+- **PDU Devices**: By checking for `/status.xml` endpoints and PDU-specific keywords
+- **Shelly Devices**: By testing Generation 1 and 2 APIs and device signatures
+- **False Positives**: Filters out IPTV boxes, routers, and other non-target devices
 
-### MQTT Topics
+### Shelly Integration
 
-The add-on uses the following MQTT topic structure:
+For Shelly devices, the system provides:
 
-- `pdu/{pdu_name}/outlet{N}/state` - Outlet state (ON/OFF)
-- `pdu/{pdu_name}/outlet{N}/set` - Control outlet (ON/OFF)
-- `pdu/{pdu_name}/outlet{N}/power` - Power consumption (if supported)
+- **Automatic Generation Detection**: Identifies Gen 1 vs Gen 2 devices
+- **Capability Discovery**: Detects relay count, power measurement, sensors
+- **Direct Control**: Toggle relays without needing MQTT
+- **Status Monitoring**: Real-time device status updates
 
-### Home Assistant Integration
+## MQTT Topics
 
-Entities are automatically created in Home Assistant:
+### PDU Devices
+- Status: `devices/pdu_name/status`
+- Control: `devices/pdu_name/outlet_X/set`
+- Sensors: `devices/pdu_name/temperature`, `devices/pdu_name/current`
 
-- **Switches**: `switch.{pdu_name}_outlet{N}` - Control each outlet
-- **Sensors**: `sensor.{pdu_name}_outlet{N}_power` - Power consumption monitoring
+### Shelly Devices
+- Status: `devices/shelly_name/status`
+- Control: `devices/shelly_name/relay_X/set`
+- Power: `devices/shelly_name/power_X`
 
-## Supported Devices
+## Language Support
 
-- LogiLink PDU8P01 (8x IEC-C13 smart PDU)
-- Intellinet 163682 (8x IEC-C13 smart PDU)
+The interface automatically detects your browser language and supports:
+- **English** (default)
+- **Portuguese** (pt, pt-PT, pt-BR)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Device Not Detected**
+   - Ensure the device is on the same network
+   - Check if the device has a web interface
+   - Verify the device is not filtered as a false positive
+
+2. **Shelly Device Not Responding**
+   - Check if the device is in AP mode
+   - Verify network connectivity
+   - Ensure the device firmware is up to date
+
+3. **PDU Authentication Fails**
+   - Default credentials are usually `admin/admin`
+   - Some devices may require different credentials
+   - Check device documentation for default login
+
+### Logs
+
+Check the Home Assistant logs for detailed error messages:
+```
+Settings -> System -> Logs -> Device MQTT Bridge
+```
+
+## Advanced Features
+
+### Device Control API
+
+The add-on provides REST API endpoints for device control:
+
+- `POST /api/shelly/toggle` - Toggle Shelly relay
+- `GET /api/shelly/status` - Get Shelly device status
+- `POST /api/test_credentials` - Test device credentials
+
+### Custom Device Types
+
+The system can be extended to support additional device types by modifying the `device_detection.py` file.
+
+## Version History
+
+- **1.4.0**: Added Shelly device support, improved detection, multi-language interface
+- **1.3.4**: Basic PDU support with visual discovery
+- **1.3.0**: Initial release with LogiLink/Intellinet PDU support
 
 ## Support
 
-For issues and feature requests, please visit the [GitHub repository](https://github.com/your-username/homeassistant-addon-logilink-pdu-mqtt).
+For issues and feature requests, please use the GitHub repository issues page.
 
 ## License
 
-This add-on is licensed under the MIT License. 
+This project is licensed under the MIT License. 

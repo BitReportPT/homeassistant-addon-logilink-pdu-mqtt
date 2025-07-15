@@ -379,7 +379,7 @@
             <div id="discoveredPdus" class="discovered-pdus"></div>
 
             <div class="configured-section">
-                <h2>{{ t.pdu_configuration }}</h2>
+                <h2>{{ t.device_configuration }}</h2>
                 <div id="configuredPdus" class="discovered-pdus"></div>
                 
                 <div class="save-config">
@@ -461,14 +461,14 @@
                     .then(response => response.json())
                     .then(data => {
                         progressFill.style.width = data.progress + '%';
-                        statusDiv.textContent = `${translations.progress}: ${data.progress}% - ${data.discovered_pdus.length} PDUs ${translations.discovered_pdus.toLowerCase()}`;
+                        statusDiv.textContent = `${translations.progress}: ${data.progress}% - ${data.discovered_devices.length} ${translations.discovered_devices.toLowerCase()}`;
                         
                         if (!data.scanning) {
                             clearInterval(scanInterval);
                             progressBar.style.display = 'none';
-                            statusDiv.textContent = `${translations.scan_complete} ${data.discovered_pdus.length} PDUs ${translations.discovered_pdus.toLowerCase()}`;
+                            statusDiv.textContent = `${translations.scan_complete} ${data.discovered_devices.length} ${translations.discovered_devices.toLowerCase()}`;
                             resetScanButton();
-                            displayDiscoveredPdus(data.discovered_pdus);
+                            displayDiscoveredDevices(data.discovered_devices);
                         }
                     })
                     .catch(error => {
@@ -485,55 +485,106 @@
             scanBtn.textContent = '🔍 ' + translations.start_scan;
         }
 
-        function displayDiscoveredPdus(pdus) {
+        function displayDiscoveredDevices(devices) {
             const container = document.getElementById('discoveredPdus');
             container.innerHTML = '';
             
-            pdus.forEach(pdu => {
-                const card = createPduCard(pdu);
+            devices.forEach(device => {
+                const card = createDeviceCard(device);
                 container.appendChild(card);
             });
         }
 
-        function createPduCard(pdu, configured = false) {
+        function createDeviceCard(device, configured = false) {
             const card = document.createElement('div');
             card.className = `pdu-card ${configured ? 'configured' : ''}`;
             
-            card.innerHTML = `
-                <div class="pdu-header">
-                    <span class="pdu-ip">${pdu.ip}</span>
-                    <span class="pdu-type">${pdu.type}</span>
-                </div>
-                <div class="pdu-details">
+            let deviceIcon = '🔌';
+            let deviceColor = '#1976d2';
+            let deviceDetails = '';
+            
+            // Set device-specific properties
+            if (device.type.includes('Shelly')) {
+                deviceIcon = '💡';
+                deviceColor = '#4CAF50';
+                deviceDetails = `
                     <div class="pdu-detail">
-                        <span>${translations.endpoint}:</span>
-                        <span>${pdu.endpoint}</span>
+                        <span>${translations.model}:</span>
+                        <span>${device.model || 'Unknown'}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>${translations.channels}:</span>
+                        <span>${device.channels || 0}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>${translations.capabilities}:</span>
+                        <span>${device.capabilities ? device.capabilities.join(', ') : 'Unknown'}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>${translations.mqtt_available}:</span>
+                        <span>${device.mqtt_available ? translations.yes : translations.no}</span>
+                    </div>
+                `;
+            } else if (device.type === 'PDU') {
+                deviceIcon = '🔌';
+                deviceColor = '#1976d2';
+                deviceDetails = `
+                    <div class="pdu-detail">
+                        <span>${translations.model}:</span>
+                        <span>${device.model || 'Unknown'}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>${translations.outlets}:</span>
+                        <span>${device.outlets || 'Unknown'}</span>
                     </div>
                     <div class="pdu-detail">
                         <span>${translations.auth_required}:</span>
-                        <span>${pdu.auth_required ? translations.yes : translations.no}</span>
+                        <span>${device.auth_required ? translations.yes : translations.no}</span>
                     </div>
-                    ${pdu.outlets ? `<div class="outlet-status">
-                        ${pdu.outlets.map((outlet, i) => 
-                            `<div class="outlet ${outlet}" title="${translations.outlets} ${i+1}: ${outlet}">${i+1}</div>`
-                        ).join('')}
-                    </div>` : ''}
+                `;
+            } else {
+                deviceIcon = '❓';
+                deviceColor = '#666';
+                deviceDetails = `
+                    <div class="pdu-detail">
+                        <span>${translations.model}:</span>
+                        <span>${device.model || 'Unknown'}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>${translations.compatible}:</span>
+                        <span>${device.compatible ? translations.yes : translations.no}</span>
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                <div class="pdu-header">
+                    <span class="pdu-ip">${device.ip}</span>
+                    <span class="pdu-type" style="background-color: ${deviceColor}20; color: ${deviceColor};">
+                        ${deviceIcon} ${device.type}
+                    </span>
+                </div>
+                <div class="pdu-details">
+                    ${deviceDetails}
                 </div>
                 <div class="pdu-actions">
-                    <button class="btn btn-small btn-test" onclick="toggleCredentials('${pdu.ip}')">
+                    <button class="btn btn-small btn-test" onclick="toggleCredentials('${device.ip}')">
                         🔧 ${translations.test}
                     </button>
-                    ${!configured ? `<button class="btn btn-small btn-add" onclick="addToConfig('${pdu.ip}')">
+                    ${!configured && device.compatible ? `<button class="btn btn-small btn-add" onclick="addToConfig('${device.ip}', '${device.type}')">
                         ➕ ${translations.configure}
                     </button>` : ''}
+                    ${device.type.includes('Shelly') ? `<button class="btn btn-small btn-control" onclick="toggleShelly('${device.ip}', 0, ${device.generation || 1})">
+                        🎛️ ${translations.toggle_relay}
+                    </button>` : ''}
                 </div>
-                <div id="creds-${pdu.ip}" class="credentials-form">
+                <div id="creds-${device.ip}" class="credentials-form">
                     <div class="credentials-inputs">
-                        <input type="text" placeholder="${translations.username}" value="admin" id="user-${pdu.ip}">
-                        <input type="password" placeholder="${translations.password}" value="admin" id="pass-${pdu.ip}">
-                        <button class="btn btn-small" onclick="testCredentials('${pdu.ip}')">${translations.test}</button>
+                        <input type="text" placeholder="${translations.username}" value="${device.type.includes('Shelly') ? '' : 'admin'}" id="user-${device.ip}">
+                        <input type="password" placeholder="${translations.password}" value="${device.type.includes('Shelly') ? '' : 'admin'}" id="pass-${device.ip}">
+                        <button class="btn btn-small" onclick="testCredentials('${device.ip}', '${device.type}')">${translations.test}</button>
                     </div>
-                    <div id="test-result-${pdu.ip}" style="margin-top: 10px;"></div>
+                    <div id="test-result-${device.ip}" style="margin-top: 10px;"></div>
                 </div>
             `;
             
@@ -545,12 +596,12 @@
             form.classList.toggle('show');
         }
 
-        function testCredentials(ip) {
+        function testCredentials(ip, deviceType = 'pdu') {
             const username = document.getElementById(`user-${ip}`).value;
             const password = document.getElementById(`pass-${ip}`).value;
             const resultDiv = document.getElementById(`test-result-${ip}`);
             
-            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>A testar...</div>';
+            resultDiv.innerHTML = `<div class="loading"><div class="spinner"></div>${translations.testing}</div>`;
             
             fetch('/api/test_credentials', {
                 method: 'POST',
@@ -560,58 +611,93 @@
                 body: JSON.stringify({
                     ip: ip,
                     username: username,
-                    password: password
+                    password: password,
+                    device_type: deviceType
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    resultDiv.innerHTML = `
-                        <div class="success">
-                            ✅ Conexão bem-sucedida!<br>
-                            Tomadas: ${data.outlet_count}<br>
-                            ${data.temperature ? `Temperatura: ${data.temperature}°C<br>` : ''}
-                            ${data.humidity ? `Humidade: ${data.humidity}%<br>` : ''}
-                            ${data.current ? `Corrente: ${data.current}A` : ''}
-                        </div>
-                    `;
+                    let successMessage = `✅ ${translations.credential_test_success}<br>`;
+                    
+                    if (deviceType.toLowerCase().includes('shelly')) {
+                        successMessage += `${translations.device_type}: ${data.device_type}<br>`;
+                        if (data.mac) successMessage += `MAC: ${data.mac}<br>`;
+                        if (data.relay_count) successMessage += `${translations.channels}: ${data.relay_count}<br>`;
+                        if (data.power) successMessage += `${translations.power}: ${data.power.join(', ')}W<br>`;
+                        if (data.temperature) successMessage += `${translations.temperature}: ${data.temperature}°C<br>`;
+                    } else {
+                        successMessage += `${translations.outlets}: ${data.outlet_count}<br>`;
+                        if (data.temperature) successMessage += `${translations.temperature}: ${data.temperature}°C<br>`;
+                        if (data.humidity) successMessage += `Humidade: ${data.humidity}%<br>`;
+                        if (data.current) successMessage += `${translations.current}: ${data.current}A`;
+                    }
+                    
+                    resultDiv.innerHTML = `<div class="success">${successMessage}</div>`;
                 } else {
-                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${data.error}</div>`;
+                    resultDiv.innerHTML = `<div class="error">❌ ${translations.error}: ${data.error}</div>`;
                 }
             })
             .catch(error => {
-                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+                resultDiv.innerHTML = `<div class="error">❌ ${translations.error}: ${error.message}</div>`;
             });
         }
 
-        function addToConfig(ip) {
+        function addToConfig(ip, deviceType = 'pdu') {
             const username = document.getElementById(`user-${ip}`).value;
             const password = document.getElementById(`pass-${ip}`).value;
             
-            const pduName = `pdu_${ip.replace(/\./g, '_')}`;
+            const deviceName = `${deviceType.toLowerCase().replace(/\s+/g, '_')}_${ip.replace(/\./g, '_')}`;
             
-            const newPdu = {
-                name: pduName,
+            const newDevice = {
+                name: deviceName,
                 host: ip,
+                type: deviceType,
                 username: username,
                 password: password
             };
             
-            configuredPdus.push(newPdu);
+            configuredPdus.push(newDevice);
             updateConfiguredPdus();
-            showMessage(`PDU ${ip} adicionado à configuração`, 'success');
+            showMessage(`${deviceType} ${ip} ${translations.configuration_saved}`, 'success');
+        }
+        
+        function toggleShelly(ip, channel = 0, generation = 1) {
+            fetch('/api/shelly/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ip: ip,
+                    channel: channel,
+                    generation: generation
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(`${translations.toggle_relay} ${ip} - ${translations.success}`, 'success');
+                } else {
+                    showMessage(`${translations.error}: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage(`${translations.error}: ${error.message}`, 'error');
+            });
         }
 
         function updateConfiguredPdus() {
             const container = document.getElementById('configuredPdus');
             container.innerHTML = '';
             
-            configuredPdus.forEach((pdu, index) => {
-                const card = createPduCard({
-                    ip: pdu.host,
-                    type: 'Configurado',
-                    endpoint: 'status.xml',
-                    auth_required: true
+            configuredPdus.forEach((device, index) => {
+                const card = createDeviceCard({
+                    ip: device.host,
+                    type: device.type + ' (' + translations.configured + ')',
+                    model: device.name,
+                    auth_required: true,
+                    compatible: true
                 }, true);
                 
                 // Add remove button
@@ -629,12 +715,12 @@
         function removeFromConfig(index) {
             configuredPdus.splice(index, 1);
             updateConfiguredPdus();
-            showMessage('PDU removido da configuração', 'success');
+            showMessage(translations.configuration_saved, 'success');
         }
 
         function saveConfiguration() {
             if (configuredPdus.length === 0) {
-                showMessage('Nenhum PDU para configurar', 'error');
+                showMessage(translations.no_devices_found, 'error');
                 return;
             }
             
@@ -644,19 +730,19 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    pdus: configuredPdus
+                    devices: configuredPdus
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    showMessage('Erro ao guardar: ' + data.error, 'error');
+                    showMessage(translations.error + ': ' + data.error, 'error');
                 } else {
-                    showMessage('Configuração guardada com sucesso! Reinicie o addon para aplicar.', 'success');
+                    showMessage(translations.configuration_saved + '! Reinicie o addon para aplicar.', 'success');
                 }
             })
             .catch(error => {
-                showMessage('Erro ao guardar: ' + error.message, 'error');
+                showMessage(translations.error + ': ' + error.message, 'error');
             });
         }
 
@@ -664,8 +750,8 @@
             fetch('/api/load_config')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.pdu_list) {
-                        configuredPdus = data.pdu_list;
+                    if (data.device_list) {
+                        configuredPdus = data.device_list;
                         updateConfiguredPdus();
                     }
                 })

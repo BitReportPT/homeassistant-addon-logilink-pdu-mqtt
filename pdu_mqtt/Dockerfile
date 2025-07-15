@@ -18,7 +18,9 @@ COPY run.py /
 COPY pdu.py /
 COPY discover_pdus.py /
 COPY web_interface.py /
+COPY device_detection.py /
 COPY bug_fixes.py /
+COPY translations.json /
 
 # Create templates directory and copy templates
 RUN mkdir -p /templates
