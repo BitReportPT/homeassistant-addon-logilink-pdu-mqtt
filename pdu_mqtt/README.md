@@ -168,7 +168,7 @@ The system can be extended to support additional device types by modifying the `
 
 ## Support
 
-For issues and feature requests, please use the GitHub repository issues page.
+For issues and feature requests, please create an issue in the GitHub repository.
 
 ## License
 
