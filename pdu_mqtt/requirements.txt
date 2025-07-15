@@ -1,4 +1,4 @@
-paho-mqtt==1.6.1
+paho-mqtt>=1.6.1
 aiohttp==3.9.1
 asyncio-mqtt==0.16.1
 requests==2.31.0

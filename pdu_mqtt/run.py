@@ -45,7 +45,8 @@ def load_config():
         }
 
 def on_connect(client, userdata, flags, rc, properties=None):
-    """MQTT connection callback (API v2)"""
+    """MQTT connection callback (compatible with both API versions)"""
+    # Handle both API v1 and v2 (properties parameter is optional in v1)
     if rc == 0:
         logger.info("Connected to MQTT broker")
         
@@ -75,7 +76,8 @@ def on_connect(client, userdata, flags, rc, properties=None):
         logger.error(f"Failed to connect to MQTT broker: {rc}")
 
 def on_disconnect(client, userdata, rc, properties=None):
-    """MQTT disconnection callback"""
+    """MQTT disconnection callback (compatible with both API versions)"""
+    # Handle both API v1 and v2 (properties parameter is optional in v1)
     if rc != 0:
         logger.warning(f"Unexpected disconnect from MQTT broker: {rc}")
 
@@ -283,8 +285,15 @@ def main():
         logger.info(f"PDUs: {list(pdu_instances.keys())}")
         logger.info(f"Web interface: http://localhost:8099")
         
-        # Setup MQTT client
-        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        # Setup MQTT client with version compatibility
+        try:
+            # Try new API (paho-mqtt >= 2.0)
+            client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+            logger.debug("Using MQTT Client API v2")
+        except AttributeError:
+            # Fallback to old API (paho-mqtt < 2.0)
+            client = mqtt.Client()
+            logger.debug("Using MQTT Client API v1 (legacy)")
         
         if mqtt_user:
             client.username_pw_set(mqtt_user, mqtt_password)
