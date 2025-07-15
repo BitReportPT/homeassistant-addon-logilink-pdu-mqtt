@@ -1,0 +1,643 @@
+# =============================================================================
+# Dashboard Visual Avançado para PDU Control com Descoberta Integrada
+# =============================================================================
+# 
+# Este dashboard inclui:
+# - Interface de descoberta visual de PDUs
+# - Controlo avançado das tomadas com status visual
+# - Monitoramento em tempo real com gráficos
+# - Alertas visuais e notificações
+# - Interface responsiva e moderna
+# =============================================================================
+
+title: "PDU Control Center - Visual Discovery"
+views:
+  - title: "🔍 Descoberta de PDUs"
+    path: pdu-discovery
+    icon: mdi:lan-check
+    cards:
+      # Header com informações sobre descoberta
+      - type: markdown
+        content: |
+          ## 🔍 Descoberta Visual de PDUs
+          
+          Use a interface web integrada para descobrir PDUs automaticamente na sua rede.
+          
+          **Acesso:** [Interface de Descoberta](http://localhost:8099)
+          
+          ### Funcionalidades:
+          - 🔍 Descoberta automática de PDUs na rede
+          - 🧪 Teste de credenciais em tempo real
+          - ⚙️ Configuração visual sem editar YAML
+          - 📊 Visualização do estado das tomadas
+          - 💾 Guardar configuração automaticamente
+          
+          ### Como usar:
+          1. Aceda à interface web através do link acima
+          2. Configure a gama de rede para procurar
+          3. Clique em "Procurar PDUs" e aguarde
+          4. Teste as credenciais para cada PDU encontrado
+          5. Adicione os PDUs à configuração
+          6. Guarde e reinicie o addon
+          
+          ---
+
+      # Status do addon
+      - type: entities
+        title: "Status do Addon"
+        entities:
+          - entity: sensor.pdu_mqtt_addon_status
+            name: "Status do Addon"
+          - entity: sensor.pdu_mqtt_web_interface
+            name: "Interface Web"
+          - entity: sensor.pdu_mqtt_discovered_pdus
+            name: "PDUs Descobertos"
+
+      # Ações rápidas
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: "Abrir Interface"
+            icon: mdi:web
+            tap_action:
+              action: url
+              url_path: "http://localhost:8099"
+            
+          - type: button
+            name: "Reiniciar Addon"
+            icon: mdi:restart
+            tap_action:
+              action: call-service
+              service: hassio.addon_restart
+              service_data:
+                addon: local_pdu_mqtt
+                
+          - type: button
+            name: "Ver Logs"
+            icon: mdi:file-document-outline
+            tap_action:
+              action: url
+              url_path: "/hassio/addon/local_pdu_mqtt/logs"
+
+  - title: "📊 Monitoramento"
+    path: pdu-monitoring
+    icon: mdi:chart-line
+    cards:
+      # Gráficos de monitoramento
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 📊 Monitoramento em Tempo Real
+              
+          - type: horizontal-stack
+            cards:
+              # Temperatura
+              - type: gauge
+                entity: sensor.rack_01_temperature
+                name: "Temperatura"
+                min: 0
+                max: 50
+                severity:
+                  green: 0
+                  yellow: 30
+                  red: 40
+                
+              # Humidade
+              - type: gauge
+                entity: sensor.rack_01_humidity
+                name: "Humidade"
+                min: 0
+                max: 100
+                severity:
+                  green: 30
+                  yellow: 70
+                  red: 80
+                
+              # Corrente
+              - type: gauge
+                entity: sensor.rack_01_current
+                name: "Corrente"
+                min: 0
+                max: 16
+                severity:
+                  green: 0
+                  yellow: 12
+                  red: 15
+
+          # Gráficos históricos
+          - type: history-graph
+            entities:
+              - entity: sensor.rack_01_temperature
+                name: "Temperatura"
+              - entity: sensor.rack_01_humidity
+                name: "Humidade"
+              - entity: sensor.rack_01_current
+                name: "Corrente"
+            hours_to_show: 24
+            refresh_interval: 10
+
+          # Status das tomadas em grid
+          - type: grid
+            columns: 4
+            cards:
+              - type: custom:button-card
+                entity: switch.rack_01_outlet1
+                name: "Servidor 1"
+                icon: mdi:server
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet2
+                name: "Servidor 2"
+                icon: mdi:server
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet3
+                name: "Switch"
+                icon: mdi:switch
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet4
+                name: "Router"
+                icon: mdi:router-wireless
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet5
+                name: "NAS"
+                icon: mdi:nas
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet6
+                name: "Backup"
+                icon: mdi:backup-restore
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet7
+                name: "Monitor"
+                icon: mdi:monitor
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+                  
+              - type: custom:button-card
+                entity: switch.rack_01_outlet8
+                name: "Iluminação"
+                icon: mdi:lightbulb
+                size: 25%
+                styles:
+                  card:
+                    - height: 80px
+                  icon:
+                    - color: |
+                        [[[
+                          if (entity.state == 'on') return '#4CAF50';
+                          return '#f44336';
+                        ]]]
+                tap_action:
+                  action: toggle
+                hold_action:
+                  action: more-info
+
+  - title: "🎛️ Controlo Avançado"
+    path: pdu-control
+    icon: mdi:power-socket-eu
+    cards:
+      # Controlo por grupos
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## 🎛️ Controlo por Grupos
+              
+          - type: horizontal-stack
+            cards:
+              - type: button
+                name: "Ligar Servidores"
+                icon: mdi:server-plus
+                tap_action:
+                  action: call-service
+                  service: script.pdu_turn_on_servers
+                  
+              - type: button
+                name: "Desligar Servidores"
+                icon: mdi:server-minus
+                tap_action:
+                  action: call-service
+                  service: script.pdu_turn_off_servers
+                  
+              - type: button
+                name: "Reiniciar Rede"
+                icon: mdi:restart
+                tap_action:
+                  action: call-service
+                  service: script.pdu_restart_network
+                  
+              - type: button
+                name: "Emergência OFF"
+                icon: mdi:power-off
+                tap_action:
+                  action: call-service
+                  service: script.pdu_emergency_off
+                confirmation:
+                  text: "Tem certeza que deseja desligar todos os equipamentos?"
+
+          # Programações
+          - type: entities
+            title: "Programações Automáticas"
+            entities:
+              - entity: automation.pdu_night_mode
+                name: "Modo Noturno"
+              - entity: automation.pdu_temperature_alert
+                name: "Alerta Temperatura"
+              - entity: automation.pdu_power_monitoring
+                name: "Monitoramento Energia"
+              - entity: automation.pdu_backup_schedule
+                name: "Horário Backup"
+
+          # Status detalhado
+          - type: entities
+            title: "Status Detalhado"
+            entities:
+              - entity: sensor.rack_01_device_info
+                name: "Informação do Dispositivo"
+              - entity: sensor.rack_01_uptime
+                name: "Tempo Online"
+              - entity: sensor.rack_01_total_power
+                name: "Energia Total"
+              - entity: sensor.rack_01_outlets_on
+                name: "Tomadas Ligadas"
+
+  - title: "⚠️ Alertas"
+    path: pdu-alerts
+    icon: mdi:alert
+    cards:
+      # Alertas ativos
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## ⚠️ Sistema de Alertas
+              
+          - type: conditional
+            conditions:
+              - entity: sensor.rack_01_temperature
+                state_not: "unavailable"
+                above: 35
+            card:
+              type: alert
+              entity: alert.pdu_high_temperature
+              title: "🌡️ Temperatura Alta"
+              
+          - type: conditional
+            conditions:
+              - entity: sensor.rack_01_current
+                state_not: "unavailable"
+                above: 12
+            card:
+              type: alert
+              entity: alert.pdu_high_current
+              title: "⚡ Corrente Alta"
+              
+          - type: conditional
+            conditions:
+              - entity: sensor.rack_01_humidity
+                state_not: "unavailable"
+                above: 80
+            card:
+              type: alert
+              entity: alert.pdu_high_humidity
+              title: "💧 Humidade Alta"
+
+          # Histórico de alertas
+          - type: history-graph
+            entities:
+              - entity: alert.pdu_high_temperature
+                name: "Temperatura"
+              - entity: alert.pdu_high_current
+                name: "Corrente"
+              - entity: alert.pdu_high_humidity
+                name: "Humidade"
+            hours_to_show: 24
+            refresh_interval: 10
+
+          # Configurações de alerta
+          - type: entities
+            title: "Configurações de Alertas"
+            entities:
+              - entity: input_number.pdu_temp_threshold
+                name: "Limite Temperatura"
+              - entity: input_number.pdu_current_threshold
+                name: "Limite Corrente"
+              - entity: input_number.pdu_humidity_threshold
+                name: "Limite Humidade"
+              - entity: input_boolean.pdu_alerts_enabled
+                name: "Alertas Ativados"
+              - entity: input_boolean.pdu_email_notifications
+                name: "Notificações Email"
+
+# =============================================================================
+# Configurações adicionais necessárias para configuration.yaml
+# =============================================================================
+
+# Adicionar ao configuration.yaml:
+#
+# sensor:
+#   - platform: template
+#     sensors:
+#       pdu_mqtt_addon_status:
+#         friendly_name: "PDU MQTT Addon Status"
+#         value_template: "{{ states('sensor.supervisor_addons') | selectattr('slug', 'eq', 'local_pdu_mqtt') | map(attribute='state') | first | default('unknown') }}"
+#         
+#       pdu_mqtt_web_interface:
+#         friendly_name: "PDU Web Interface"
+#         value_template: "http://localhost:8099"
+#         
+#       rack_01_total_power:
+#         friendly_name: "Total Power"
+#         unit_of_measurement: "W"
+#         value_template: "{{ (states('sensor.rack_01_current') | float * 230) | round(2) }}"
+#         
+#       rack_01_outlets_on:
+#         friendly_name: "Outlets On"
+#         value_template: >
+#           {% set outlets = [
+#             states('switch.rack_01_outlet1'),
+#             states('switch.rack_01_outlet2'),
+#             states('switch.rack_01_outlet3'),
+#             states('switch.rack_01_outlet4'),
+#             states('switch.rack_01_outlet5'),
+#             states('switch.rack_01_outlet6'),
+#             states('switch.rack_01_outlet7'),
+#             states('switch.rack_01_outlet8')
+#           ] %}
+#           {{ outlets | select('eq', 'on') | list | count }}/8
+#
+# input_number:
+#   pdu_temp_threshold:
+#     name: "Temperature Threshold"
+#     min: 20
+#     max: 60
+#     step: 1
+#     initial: 40
+#     unit_of_measurement: "°C"
+#     
+#   pdu_current_threshold:
+#     name: "Current Threshold"
+#     min: 1
+#     max: 16
+#     step: 0.1
+#     initial: 12
+#     unit_of_measurement: "A"
+#     
+#   pdu_humidity_threshold:
+#     name: "Humidity Threshold"
+#     min: 30
+#     max: 90
+#     step: 5
+#     initial: 80
+#     unit_of_measurement: "%"
+#
+# input_boolean:
+#   pdu_alerts_enabled:
+#     name: "PDU Alerts Enabled"
+#     initial: true
+#     
+#   pdu_email_notifications:
+#     name: "Email Notifications"
+#     initial: false
+#
+# alert:
+#   pdu_high_temperature:
+#     name: "PDU High Temperature"
+#     entity_id: sensor.rack_01_temperature
+#     state: "on"
+#     repeat: 5
+#     can_acknowledge: true
+#     skip_first: false
+#     message: "PDU temperature is above threshold: {{ states('sensor.rack_01_temperature') }}°C"
+#     done_message: "PDU temperature is back to normal"
+#     notifiers:
+#       - notify
+#     data:
+#       priority: high
+#       
+#   pdu_high_current:
+#     name: "PDU High Current"
+#     entity_id: sensor.rack_01_current
+#     state: "on"
+#     repeat: 5
+#     can_acknowledge: true
+#     skip_first: false
+#     message: "PDU current is above threshold: {{ states('sensor.rack_01_current') }}A"
+#     done_message: "PDU current is back to normal"
+#     notifiers:
+#       - notify
+#     data:
+#       priority: high
+#       
+#   pdu_high_humidity:
+#     name: "PDU High Humidity"
+#     entity_id: sensor.rack_01_humidity
+#     state: "on"
+#     repeat: 10
+#     can_acknowledge: true
+#     skip_first: false
+#     message: "PDU humidity is above threshold: {{ states('sensor.rack_01_humidity') }}%"
+#     done_message: "PDU humidity is back to normal"
+#     notifiers:
+#       - notify
+#     data:
+#       priority: medium
+#
+# script:
+#   pdu_turn_on_servers:
+#     alias: "Turn On Servers"
+#     sequence:
+#       - service: switch.turn_on
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet1
+#             - switch.rack_01_outlet2
+#             - switch.rack_01_outlet5
+#             
+#   pdu_turn_off_servers:
+#     alias: "Turn Off Servers"
+#     sequence:
+#       - service: switch.turn_off
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet1
+#             - switch.rack_01_outlet2
+#             - switch.rack_01_outlet5
+#             
+#   pdu_restart_network:
+#     alias: "Restart Network"
+#     sequence:
+#       - service: switch.turn_off
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet3
+#             - switch.rack_01_outlet4
+#       - delay: "00:00:10"
+#       - service: switch.turn_on
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet4
+#       - delay: "00:00:30"
+#       - service: switch.turn_on
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet3
+#             
+#   pdu_emergency_off:
+#     alias: "Emergency Off"
+#     sequence:
+#       - service: switch.turn_off
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet1
+#             - switch.rack_01_outlet2
+#             - switch.rack_01_outlet3
+#             - switch.rack_01_outlet4
+#             - switch.rack_01_outlet5
+#             - switch.rack_01_outlet6
+#             - switch.rack_01_outlet7
+#             - switch.rack_01_outlet8
+#
+# automation:
+#   - alias: "PDU Night Mode"
+#     trigger:
+#       platform: time
+#       at: "23:00:00"
+#     action:
+#       - service: switch.turn_off
+#         target:
+#           entity_id:
+#             - switch.rack_01_outlet7
+#             - switch.rack_01_outlet8
+#             
+#   - alias: "PDU Temperature Alert"
+#     trigger:
+#       platform: numeric_state
+#       entity_id: sensor.rack_01_temperature
+#       above: 40
+#     action:
+#       - service: notify.notify
+#         data:
+#           title: "PDU Temperature Alert"
+#           message: "Temperature is {{ states('sensor.rack_01_temperature') }}°C"
+#           
+#   - alias: "PDU Power Monitoring"
+#     trigger:
+#       platform: numeric_state
+#       entity_id: sensor.rack_01_current
+#       above: 12
+#     action:
+#       - service: notify.notify
+#         data:
+#           title: "PDU High Power Usage"
+#           message: "Current usage is {{ states('sensor.rack_01_current') }}A"
+#           
+#   - alias: "PDU Backup Schedule"
+#     trigger:
+#       platform: time
+#       at: "02:00:00"
+#     action:
+#       - service: switch.turn_on
+#         target:
+#           entity_id: switch.rack_01_outlet6

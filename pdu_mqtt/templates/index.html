@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descoberta Visual de PDUs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .scan-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .scan-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input, select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .scan-status {
+            text-align: center;
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .discovered-pdus {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .pdu-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .pdu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .pdu-card.configured {
+            border-color: #4CAF50;
+            background: #f8fff8;
+        }
+
+        .pdu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .pdu-ip {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .pdu-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .pdu-details {
+            margin-bottom: 15px;
+        }
+
+        .pdu-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .pdu-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        .btn-test {
+            background: #2196F3;
+        }
+
+        .btn-test:hover {
+            background: #1976D2;
+        }
+
+        .btn-add {
+            background: #4CAF50;
+        }
+
+        .btn-add:hover {
+            background: #45a049;
+        }
+
+        .credentials-form {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .credentials-form.show {
+            display: block;
+        }
+
+        .credentials-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .configured-section {
+            margin-top: 40px;
+        }
+
+        .configured-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .save-config {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-save {
+            background: #FF9800;
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+
+        .btn-save:hover {
+            background: #F57C00;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .outlet-status {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .outlet {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .outlet.on {
+            background: #4CAF50;
+        }
+
+        .outlet.off {
+            background: #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .scan-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .discovered-pdus {
+                grid-template-columns: 1fr;
+            }
+            
+            .credentials-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Descoberta Visual de PDUs</h1>
+            <p>Encontre e configure PDUs na sua rede automaticamente</p>
+        </div>
+
+        <div class="main-content">
+            <div class="scan-section">
+                <h2>Configuração da Descoberta</h2>
+                <form id="scanForm" class="scan-form">
+                    <div class="form-group">
+                        <label for="network">Rede:</label>
+                        <input type="text" id="network" value="192.168.1" placeholder="192.168.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="startIp">IP Inicial:</label>
+                        <input type="number" id="startIp" value="1" min="1" max="254">
+                    </div>
+                    <div class="form-group">
+                        <label for="endIp">IP Final:</label>
+                        <input type="number" id="endIp" value="254" min="1" max="254">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn" id="scanBtn">🔍 Procurar PDUs</button>
+                    </div>
+                </form>
+
+                <div id="scanProgress" class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <div id="scanStatus" class="scan-status"></div>
+            </div>
+
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+            <div id="discoveredPdus" class="discovered-pdus"></div>
+
+            <div class="configured-section">
+                <h2>PDUs Configurados</h2>
+                <div id="configuredPdus" class="discovered-pdus"></div>
+                
+                <div class="save-config">
+                    <button id="saveConfigBtn" class="btn btn-save">💾 Guardar Configuração</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scanInterval;
+        let configuredPdus = [];
+
+        // Load existing configuration on page load
+        window.addEventListener('load', loadConfiguration);
+
+        document.getElementById('scanForm').addEventListener('submit', startScan);
+        document.getElementById('saveConfigBtn').addEventListener('click', saveConfiguration);
+
+        function startScan(e) {
+            e.preventDefault();
+            
+            const network = document.getElementById('network').value;
+            const startIp = parseInt(document.getElementById('startIp').value);
+            const endIp = parseInt(document.getElementById('endIp').value);
+            
+            if (startIp >= endIp) {
+                showMessage('IP inicial deve ser menor que IP final', 'error');
+                return;
+            }
+
+            const scanBtn = document.getElementById('scanBtn');
+            scanBtn.disabled = true;
+            scanBtn.textContent = '🔍 A procurar...';
+
+            // Clear previous results
+            document.getElementById('discoveredPdus').innerHTML = '';
+            
+            // Start scan
+            fetch('/api/scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    network: network,
+                    start: startIp,
+                    end: endIp
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showMessage(data.error, 'error');
+                    resetScanButton();
+                } else {
+                    showMessage('Descoberta iniciada...', 'success');
+                    startStatusPolling();
+                }
+            })
+            .catch(error => {
+                showMessage('Erro ao iniciar descoberta: ' + error.message, 'error');
+                resetScanButton();
+            });
+        }
+
+        function startStatusPolling() {
+            const progressBar = document.getElementById('scanProgress');
+            const progressFill = progressBar.querySelector('.progress-fill');
+            const statusDiv = document.getElementById('scanStatus');
+            
+            progressBar.style.display = 'block';
+            
+            scanInterval = setInterval(() => {
+                fetch('/api/scan/status')
+                    .then(response => response.json())
+                    .then(data => {
+                        progressFill.style.width = data.progress + '%';
+                        statusDiv.textContent = `Progresso: ${data.progress}% - ${data.discovered_pdus.length} PDUs encontrados`;
+                        
+                        if (!data.scanning) {
+                            clearInterval(scanInterval);
+                            progressBar.style.display = 'none';
+                            statusDiv.textContent = `Descoberta completa! ${data.discovered_pdus.length} PDUs encontrados`;
+                            resetScanButton();
+                            displayDiscoveredPdus(data.discovered_pdus);
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(scanInterval);
+                        showMessage('Erro ao verificar status: ' + error.message, 'error');
+                        resetScanButton();
+                    });
+            }, 1000);
+        }
+
+        function resetScanButton() {
+            const scanBtn = document.getElementById('scanBtn');
+            scanBtn.disabled = false;
+            scanBtn.textContent = '🔍 Procurar PDUs';
+        }
+
+        function displayDiscoveredPdus(pdus) {
+            const container = document.getElementById('discoveredPdus');
+            container.innerHTML = '';
+            
+            pdus.forEach(pdu => {
+                const card = createPduCard(pdu);
+                container.appendChild(card);
+            });
+        }
+
+        function createPduCard(pdu, configured = false) {
+            const card = document.createElement('div');
+            card.className = `pdu-card ${configured ? 'configured' : ''}`;
+            
+            card.innerHTML = `
+                <div class="pdu-header">
+                    <span class="pdu-ip">${pdu.ip}</span>
+                    <span class="pdu-type">${pdu.type}</span>
+                </div>
+                <div class="pdu-details">
+                    <div class="pdu-detail">
+                        <span>Endpoint:</span>
+                        <span>${pdu.endpoint}</span>
+                    </div>
+                    <div class="pdu-detail">
+                        <span>Autenticação:</span>
+                        <span>${pdu.auth_required ? 'Necessária' : 'Não necessária'}</span>
+                    </div>
+                    ${pdu.outlets ? `<div class="outlet-status">
+                        ${pdu.outlets.map((outlet, i) => 
+                            `<div class="outlet ${outlet}" title="Tomada ${i+1}: ${outlet}">${i+1}</div>`
+                        ).join('')}
+                    </div>` : ''}
+                </div>
+                <div class="pdu-actions">
+                    <button class="btn btn-small btn-test" onclick="toggleCredentials('${pdu.ip}')">
+                        🔧 Testar
+                    </button>
+                    ${!configured ? `<button class="btn btn-small btn-add" onclick="addToConfig('${pdu.ip}')">
+                        ➕ Adicionar
+                    </button>` : ''}
+                </div>
+                <div id="creds-${pdu.ip}" class="credentials-form">
+                    <div class="credentials-inputs">
+                        <input type="text" placeholder="Username" value="admin" id="user-${pdu.ip}">
+                        <input type="password" placeholder="Password" value="admin" id="pass-${pdu.ip}">
+                        <button class="btn btn-small" onclick="testCredentials('${pdu.ip}')">Testar</button>
+                    </div>
+                    <div id="test-result-${pdu.ip}" style="margin-top: 10px;"></div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function toggleCredentials(ip) {
+            const form = document.getElementById(`creds-${ip}`);
+            form.classList.toggle('show');
+        }
+
+        function testCredentials(ip) {
+            const username = document.getElementById(`user-${ip}`).value;
+            const password = document.getElementById(`pass-${ip}`).value;
+            const resultDiv = document.getElementById(`test-result-${ip}`);
+            
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Testando...</div>';
+            
+            fetch('/api/test_credentials', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ip: ip,
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Conexão bem-sucedida!<br>
+                            Tomadas: ${data.outlet_count}<br>
+                            ${data.temperature ? `Temperatura: ${data.temperature}°C<br>` : ''}
+                            ${data.humidity ? `Humidade: ${data.humidity}%<br>` : ''}
+                            ${data.current ? `Corrente: ${data.current}A` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Erro: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            });
+        }
+
+        function addToConfig(ip) {
+            const username = document.getElementById(`user-${ip}`).value;
+            const password = document.getElementById(`pass-${ip}`).value;
+            
+            const pduName = `pdu_${ip.replace(/\./g, '_')}`;
+            
+            const newPdu = {
+                name: pduName,
+                host: ip,
+                username: username,
+                password: password
+            };
+            
+            configuredPdus.push(newPdu);
+            updateConfiguredPdus();
+            showMessage(`PDU ${ip} adicionado à configuração`, 'success');
+        }
+
+        function updateConfiguredPdus() {
+            const container = document.getElementById('configuredPdus');
+            container.innerHTML = '';
+            
+            configuredPdus.forEach((pdu, index) => {
+                const card = createPduCard({
+                    ip: pdu.host,
+                    type: 'Configurado',
+                    endpoint: 'status.xml',
+                    auth_required: true
+                }, true);
+                
+                // Add remove button
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-small';
+                removeBtn.style.background = '#f44336';
+                removeBtn.textContent = '🗑️ Remover';
+                removeBtn.onclick = () => removeFromConfig(index);
+                
+                card.querySelector('.pdu-actions').appendChild(removeBtn);
+                container.appendChild(card);
+            });
+        }
+
+        function removeFromConfig(index) {
+            configuredPdus.splice(index, 1);
+            updateConfiguredPdus();
+            showMessage('PDU removido da configuração', 'success');
+        }
+
+        function saveConfiguration() {
+            if (configuredPdus.length === 0) {
+                showMessage('Nenhum PDU para configurar', 'error');
+                return;
+            }
+            
+            fetch('/api/save_config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    pdus: configuredPdus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showMessage('Erro ao guardar: ' + data.error, 'error');
+                } else {
+                    showMessage('Configuração guardada com sucesso! Reinicie o addon para aplicar.', 'success');
+                }
+            })
+            .catch(error => {
+                showMessage('Erro ao guardar: ' + error.message, 'error');
+            });
+        }
+
+        function loadConfiguration() {
+            fetch('/api/load_config')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.pdu_list) {
+                        configuredPdus = data.pdu_list;
+                        updateConfiguredPdus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar configuração:', error);
+                });
+        }
+
+        function showMessage(message, type) {
+            const msgDiv = document.getElementById('statusMessage');
+            msgDiv.textContent = message;
+            msgDiv.className = `status-message ${type}`;
+            msgDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
