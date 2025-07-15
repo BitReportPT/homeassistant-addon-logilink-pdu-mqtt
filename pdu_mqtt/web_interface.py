@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Web Interface para Descoberta e Configuração de PDUs
-Interface visual moderna para descobrir PDUs na rede
+Web Interface for PDU Discovery and Configuration
+Modern visual interface for discovering PDUs on the network
 """
 
 from flask import Flask, render_template, jsonify, request, send_from_directory

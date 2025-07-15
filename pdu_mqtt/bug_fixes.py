@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Bug Fixes para PDU MQTT Bridge
-Correções de problemas identificados e melhorias de estabilidade
+Bug Fixes for PDU MQTT Bridge
+Corrections of identified problems and stability improvements
 """
 
 import logging
@@ -14,26 +14,26 @@ from xml.etree import ElementTree as ET
 logger = logging.getLogger(__name__)
 
 class PDUBugFixes:
-    """Classe com correções de bugs e melhorias"""
+    """Class with bug fixes and improvements"""
     
     @staticmethod
     def fix_xml_parsing(xml_content: str) -> Optional[Dict[str, Any]]:
         """
-        Bug Fix: Parsing XML mais robusto para diferentes formatos de PDU
+        Bug Fix: More robust XML parsing for different PDU formats
         """
         try:
-            # Remove caracteres problemáticos
+            # Remove problematic characters
             xml_content = xml_content.strip()
             
-            # Verifica se contém a tag response
+            # Check if contains response tag
             if "<response>" not in xml_content:
-                logger.warning("XML não contém tag <response>")
+                logger.warning("XML does not contain <response> tag")
                 return None
             
-            # Parse XML com tratamento de erros
+            # Parse XML with error handling
             xml = ET.fromstring(xml_content)
             
-            # Extrai dados com valores padrão
+            # Extract data with default values
             data = {
                 "outlets": [],
                 "tempBan": xml.findtext("tempBan", "N/A"),
@@ -41,7 +41,7 @@ class PDUBugFixes:
                 "curBan": xml.findtext("curBan", "N/A")
             }
             
-            # Extrai status das tomadas com fallback
+            # Extract outlet status with fallback
             for i in range(8):
                 tag = f"outletStat{i}"
                 val = xml.findtext(tag)
@@ -50,11 +50,11 @@ class PDUBugFixes:
                 else:
                     data["outlets"].append("unknown")
             
-            # Converte valores numéricos com validação
+            # Convert numeric values with validation
             for key in ["tempBan", "humBan", "curBan"]:
                 try:
                     if data[key] not in ["N/A", None, ""]:
-                        # Tenta converter para float para validar
+                        # Try to convert to float for validation
                         float(data[key])
                 except (ValueError, TypeError):
                     data[key] = "N/A"
@@ -62,16 +62,16 @@ class PDUBugFixes:
             return data
             
         except ET.ParseError as e:
-            logger.error(f"Erro ao fazer parse do XML: {e}")
+            logger.error(f"XML parsing error: {e}")
             return None
         except Exception as e:
-            logger.error(f"Erro inesperado no parsing XML: {e}")
+            logger.error(f"Unexpected error in XML parsing: {e}")
             return None
     
     @staticmethod
     def fix_connection_timeout(url: str, auth: tuple, timeout: int = 10) -> Optional[requests.Response]:
         """
-        Bug Fix: Conexão com timeout e retry automático
+        Bug Fix: Connection with timeout and automatic retry
         """
         max_retries = 3
         retry_delay = 2
@@ -91,49 +91,49 @@ class PDUBugFixes:
                 if response.status_code == 200:
                     return response
                 elif response.status_code == 401:
-                    logger.error(f"Credenciais inválidas para {url}")
+                    logger.error(f"Invalid credentials for {url}")
                     return response
                 else:
-                    logger.warning(f"HTTP {response.status_code} em tentativa {attempt + 1}")
+                    logger.warning(f"HTTP {response.status_code} on attempt {attempt + 1}")
                     
             except requests.exceptions.Timeout:
-                logger.warning(f"Timeout na tentativa {attempt + 1} para {url}")
+                logger.warning(f"Timeout on attempt {attempt + 1} for {url}")
             except requests.exceptions.ConnectionError:
-                logger.warning(f"Erro de conexão na tentativa {attempt + 1} para {url}")
+                logger.warning(f"Connection error on attempt {attempt + 1} for {url}")
             except requests.exceptions.RequestException as e:
-                logger.error(f"Erro na requisição: {e}")
+                logger.error(f"Request error: {e}")
                 
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 retry_delay *= 2  # Exponential backoff
         
-        logger.error(f"Falha após {max_retries} tentativas para {url}")
+        logger.error(f"Failed after {max_retries} attempts for {url}")
         return None
     
     @staticmethod
     def fix_outlet_state_validation(outlet_num: int, state: Any) -> bool:
         """
-        Bug Fix: Validação robusta do estado das tomadas
+        Bug Fix: Robust outlet state validation
         """
         if not isinstance(outlet_num, int) or outlet_num < 1 or outlet_num > 8:
-            logger.error(f"Número de tomada inválido: {outlet_num}")
+            logger.error(f"Invalid outlet number: {outlet_num}")
             return False
         
-        # Normaliza o estado
+        # Normalize state
         if isinstance(state, str):
             state = state.lower().strip()
             valid_states = ['on', 'off', 'true', 'false', '1', '0']
             if state not in valid_states:
-                logger.error(f"Estado inválido: {state}")
+                logger.error(f"Invalid state: {state}")
                 return False
         elif isinstance(state, bool):
-            pass  # Estado booleano é válido
+            pass  # Boolean state is valid
         elif isinstance(state, int):
             if state not in [0, 1]:
-                logger.error(f"Estado numérico inválido: {state}")
+                logger.error(f"Invalid numeric state: {state}")
                 return False
         else:
-            logger.error(f"Tipo de estado inválido: {type(state)}")
+            logger.error(f"Invalid state type: {type(state)}")
             return False
         
         return True
@@ -141,29 +141,29 @@ class PDUBugFixes:
     @staticmethod
     def fix_mqtt_topic_validation(topic: str) -> str:
         """
-        Bug Fix: Validação e limpeza de tópicos MQTT
+        Bug Fix: MQTT topic validation and cleanup
         """
         if not topic or not isinstance(topic, str):
-            logger.warning("Tópico MQTT inválido, usando padrão")
+            logger.warning("Invalid MQTT topic, using default")
             return "pdu"
         
-        # Remove caracteres problemáticos
+        # Remove problematic characters
         topic = topic.strip()
         invalid_chars = ['#', '+', '\x00']
         for char in invalid_chars:
             if char in topic:
-                logger.warning(f"Removendo caractere inválido '{char}' do tópico")
+                logger.warning(f"Removing invalid character '{char}' from topic")
                 topic = topic.replace(char, '')
         
-        # Remove barras duplas
+        # Remove double slashes
         while '//' in topic:
             topic = topic.replace('//', '/')
         
-        # Remove barra inicial/final
+        # Remove leading/trailing slashes
         topic = topic.strip('/')
         
         if not topic:
-            logger.warning("Tópico vazio após limpeza, usando padrão")
+            logger.warning("Empty topic after cleanup, using default")
             return "pdu"
         
         return topic
@@ -171,7 +171,7 @@ class PDUBugFixes:
     @staticmethod
     def fix_configuration_validation(config: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Bug Fix: Validação completa da configuração
+        Bug Fix: Complete configuration validation
         """
         fixed_config = {}
         
@@ -233,28 +233,28 @@ class PDUBugFixes:
     @staticmethod
     def fix_discovery_network_validation(network: str) -> Optional[str]:
         """
-        Bug Fix: Validação da rede para descoberta
+        Bug Fix: Network validation for discovery
         """
         if not network or not isinstance(network, str):
             return None
         
         network = network.strip()
         
-        # Verifica formato básico (ex: 192.168.1)
+        # Check basic format (e.g., 192.168.1)
         parts = network.split('.')
         if len(parts) != 3:
-            logger.error(f"Formato de rede inválido: {network}")
+            logger.error(f"Invalid network format: {network}")
             return None
         
-        # Valida cada parte
+        # Validate each part
         for part in parts:
             try:
                 num = int(part)
                 if num < 0 or num > 255:
-                    logger.error(f"Octeto inválido: {part}")
+                    logger.error(f"Invalid octet: {part}")
                     return None
             except ValueError:
-                logger.error(f"Octeto não numérico: {part}")
+                logger.error(f"Non-numeric octet: {part}")
                 return None
         
         return network
@@ -262,31 +262,31 @@ class PDUBugFixes:
     @staticmethod
     def fix_sensor_data_conversion(value: str) -> Optional[float]:
         """
-        Bug Fix: Conversão robusta de dados de sensores
+        Bug Fix: Robust sensor data conversion
         """
         if not value or value in ['N/A', 'n/a', 'NULL', 'null', '']:
             return None
         
         try:
-            # Remove espaços e caracteres especiais
+            # Remove spaces and special characters
             value = str(value).strip()
             
-            # Remove unidades comuns
+            # Remove common units
             units = ['°C', '°F', '%', 'A', 'V', 'W']
             for unit in units:
                 if value.endswith(unit):
                     value = value[:-len(unit)].strip()
             
-            # Converte para float
+            # Convert to float
             return float(value)
         except (ValueError, TypeError):
-            logger.warning(f"Não foi possível converter valor: {value}")
+            logger.warning(f"Could not convert value: {value}")
             return None
     
     @staticmethod
     def fix_mqtt_payload_encoding(payload: Any) -> str:
         """
-        Bug Fix: Codificação correta de payloads MQTT
+        Bug Fix: Correct MQTT payload encoding
         """
         if isinstance(payload, str):
             return payload
@@ -305,7 +305,7 @@ class PDUBugFixes:
     @staticmethod
     def fix_error_recovery(func):
         """
-        Bug Fix: Decorator para recuperação automática de erros
+        Bug Fix: Decorator for automatic error recovery
         """
         def wrapper(*args, **kwargs):
             max_retries = 3
@@ -313,9 +313,9 @@ class PDUBugFixes:
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    logger.error(f"Erro na tentativa {attempt + 1}: {e}")
+                    logger.error(f"Error on attempt {attempt + 1}: {e}")
                     if attempt == max_retries - 1:
-                        logger.error("Máximo de tentativas excedido")
+                        logger.error("Maximum retry attempts exceeded")
                         raise
                     time.sleep(2 ** attempt)  # Exponential backoff
             return None
@@ -324,7 +324,7 @@ class PDUBugFixes:
     @staticmethod
     def create_healthcheck_endpoint() -> Dict[str, Any]:
         """
-        Bug Fix: Endpoint de health check para monitoramento
+        Bug Fix: Health check endpoint for monitoring
         """
         return {
             "status": "healthy",
@@ -338,13 +338,13 @@ class PDUBugFixes:
 
 # Aplicar correções automaticamente
 def apply_bug_fixes():
-    """Aplica todas as correções de bugs automaticamente"""
-    logger.info("Aplicando correções de bugs...")
+    """Apply all bug fixes automatically"""
+    logger.info("Applying bug fixes...")
     
-    # Aqui você pode adicionar lógica para aplicar correções automaticamente
-    # Por exemplo, validar configurações existentes, limpar dados corrompidos, etc.
+    # Here you can add logic to apply fixes automatically
+    # For example, validate existing configurations, clean corrupted data, etc.
     
-    logger.info("Correções de bugs aplicadas com sucesso")
+    logger.info("Bug fixes applied successfully")
 
 if __name__ == "__main__":
     apply_bug_fixes()

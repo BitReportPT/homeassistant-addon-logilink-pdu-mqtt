@@ -1,7 +1,7 @@
 name: LogiLink & Intellinet PDU MQTT Bridge
 version: "1.4.0"
 slug: pdu_mqtt
-description: "MQTT bridge para PDUs com descoberta visual automática"
+description: "MQTT bridge for PDUs with automatic visual discovery"
 arch:
   - amd64
   - aarch64
