@@ -356,9 +356,9 @@ def start_web_interface():
             return
         
         # Try to import and run web interface
-        from web_interface import run_web_interface
+        from web_interface import run_server
         logger.info("Starting web interface on port 8099...")
-        run_web_interface()
+        run_server()
         
     except ImportError as e:
         logger.warning(f"Web interface module not available: {e}")
