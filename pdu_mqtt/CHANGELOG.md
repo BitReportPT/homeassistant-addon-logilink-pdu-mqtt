@@ -5,6 +5,34 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2024-01-15
+
+### Added
+- **Visual PDU Discovery Interface** - Web interface at port 8099 for automatic PDU discovery
+- **Network scanning** with real-time progress visualization
+- **Credential testing** integrated in the interface
+- **Visual configuration** without manual YAML editing
+- **Advanced visual dashboard** with 4 themed tabs
+- **Real-time monitoring** with temperature/current graphs
+- **Visual outlet status** with color indicators
+- **Group control** for equipment management
+- **Configurable alerts** system with visual notifications
+
+### Fixed
+- **Robust XML parsing** for different PDU formats
+- **Stable connections** with automatic retry and exponential backoff
+- **Rigorous outlet state validation** with automatic normalization
+- **MQTT topic validation** with automatic cleanup
+- **Complete configuration validation** with default values
+- **Robust sensor data conversion** with error handling
+- **Correct MQTT payload encoding** for all data types
+- **Automatic error recovery** with intelligent retry system
+
+### Changed
+- Updated to version 1.4.0 with comprehensive improvements
+- Enhanced stability and reliability across all components
+- Improved user experience with modern visual interface
+
 ## [1.3.4] - 2025-07-15
 
 ### Fixed
