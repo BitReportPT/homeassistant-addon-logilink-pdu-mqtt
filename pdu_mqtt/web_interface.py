@@ -13,12 +13,41 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from xml.etree import ElementTree as ET
 import logging
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Load translations
+def load_translations():
+    """Load translations from JSON file"""
+    try:
+        translations_path = os.path.join(os.path.dirname(__file__), 'translations.json')
+        with open(translations_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading translations: {e}")
+        return {"en": {}, "pt": {}}
+
+TRANSLATIONS = load_translations()
+
+def detect_language(request):
+    """Detect user's preferred language from Accept-Language header"""
+    accept_language = request.headers.get('Accept-Language', '')
+    
+    # Check for Portuguese variants
+    if re.search(r'pt(-[A-Z]{2})?', accept_language, re.IGNORECASE):
+        return 'pt'
+    
+    # Default to English
+    return 'en'
+
+def get_translations(lang='en'):
+    """Get translations for specified language"""
+    return TRANSLATIONS.get(lang, TRANSLATIONS.get('en', {}))
 
 class PDUDiscovery:
     def __init__(self):
@@ -155,7 +184,9 @@ discovery = PDUDiscovery()
 @app.route('/')
 def index():
     """Main interface page"""
-    return render_template('index.html')
+    lang = detect_language(request)
+    translations = get_translations(lang)
+    return render_template('index.html', lang=lang, t=translations)
 
 @app.route('/api/scan', methods=['POST'])
 def start_scan():

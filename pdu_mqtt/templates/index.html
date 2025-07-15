@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Descoberta Visual de PDUs</title>
+    <title>{{ t.title }}</title>
     <style>
         * {
             margin: 0;
@@ -343,16 +343,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔍 Descoberta Visual de PDUs</h1>
-            <p>Encontre e configure PDUs na sua rede automaticamente</p>
+            <h1>🔍 {{ t.title }}</h1>
+            <p>{{ t.subtitle }}</p>
         </div>
 
         <div class="main-content">
             <div class="scan-section">
-                <h2>Configuração da Descoberta</h2>
+                <h2>{{ t.network_scan }}</h2>
                 <form id="scanForm" class="scan-form">
                     <div class="form-group">
-                        <label for="network">Rede:</label>
+                        <label for="network">{{ t.network_range }}:</label>
                         <input type="text" id="network" value="192.168.1" placeholder="192.168.1">
                     </div>
                     <div class="form-group">
@@ -364,7 +364,7 @@
                         <input type="number" id="endIp" value="254" min="1" max="254">
                     </div>
                     <div class="form-group">
-                        <button type="submit" class="btn" id="scanBtn">🔍 Procurar PDUs</button>
+                        <button type="submit" class="btn" id="scanBtn">🔍 {{ t.start_scan }}</button>
                     </div>
                 </form>
 
@@ -379,11 +379,11 @@
             <div id="discoveredPdus" class="discovered-pdus"></div>
 
             <div class="configured-section">
-                <h2>PDUs Configurados</h2>
+                <h2>{{ t.pdu_configuration }}</h2>
                 <div id="configuredPdus" class="discovered-pdus"></div>
                 
                 <div class="save-config">
-                    <button id="saveConfigBtn" class="btn btn-save">💾 Guardar Configuração</button>
+                    <button id="saveConfigBtn" class="btn btn-save">💾 {{ t.save_configuration }}</button>
                 </div>
             </div>
         </div>
@@ -392,6 +392,9 @@
     <script>
         let scanInterval;
         let configuredPdus = [];
+        
+        // Translations
+        const translations = {{ t|tojson }};
 
         // Load existing configuration on page load
         window.addEventListener('load', loadConfiguration);
@@ -458,19 +461,19 @@
                     .then(response => response.json())
                     .then(data => {
                         progressFill.style.width = data.progress + '%';
-                        statusDiv.textContent = `Progresso: ${data.progress}% - ${data.discovered_pdus.length} PDUs encontrados`;
+                        statusDiv.textContent = `${translations.progress}: ${data.progress}% - ${data.discovered_pdus.length} PDUs ${translations.discovered_pdus.toLowerCase()}`;
                         
                         if (!data.scanning) {
                             clearInterval(scanInterval);
                             progressBar.style.display = 'none';
-                            statusDiv.textContent = `Descoberta completa! ${data.discovered_pdus.length} PDUs encontrados`;
+                            statusDiv.textContent = `${translations.scan_complete} ${data.discovered_pdus.length} PDUs ${translations.discovered_pdus.toLowerCase()}`;
                             resetScanButton();
                             displayDiscoveredPdus(data.discovered_pdus);
                         }
                     })
                     .catch(error => {
                         clearInterval(scanInterval);
-                        showMessage('Erro ao verificar status: ' + error.message, 'error');
+                        showMessage(translations.error + ': ' + error.message, 'error');
                         resetScanButton();
                     });
             }, 1000);
@@ -479,7 +482,7 @@
         function resetScanButton() {
             const scanBtn = document.getElementById('scanBtn');
             scanBtn.disabled = false;
-            scanBtn.textContent = '🔍 Procurar PDUs';
+            scanBtn.textContent = '🔍 ' + translations.start_scan;
         }
 
         function displayDiscoveredPdus(pdus) {
@@ -503,32 +506,32 @@
                 </div>
                 <div class="pdu-details">
                     <div class="pdu-detail">
-                        <span>Endpoint:</span>
+                        <span>${translations.endpoint}:</span>
                         <span>${pdu.endpoint}</span>
                     </div>
                     <div class="pdu-detail">
-                        <span>Autenticação:</span>
-                        <span>${pdu.auth_required ? 'Necessária' : 'Não necessária'}</span>
+                        <span>${translations.auth_required}:</span>
+                        <span>${pdu.auth_required ? translations.yes : translations.no}</span>
                     </div>
                     ${pdu.outlets ? `<div class="outlet-status">
                         ${pdu.outlets.map((outlet, i) => 
-                            `<div class="outlet ${outlet}" title="Tomada ${i+1}: ${outlet}">${i+1}</div>`
+                            `<div class="outlet ${outlet}" title="${translations.outlets} ${i+1}: ${outlet}">${i+1}</div>`
                         ).join('')}
                     </div>` : ''}
                 </div>
                 <div class="pdu-actions">
                     <button class="btn btn-small btn-test" onclick="toggleCredentials('${pdu.ip}')">
-                        🔧 Testar
+                        🔧 ${translations.test}
                     </button>
                     ${!configured ? `<button class="btn btn-small btn-add" onclick="addToConfig('${pdu.ip}')">
-                        ➕ Adicionar
+                        ➕ ${translations.configure}
                     </button>` : ''}
                 </div>
                 <div id="creds-${pdu.ip}" class="credentials-form">
                     <div class="credentials-inputs">
-                        <input type="text" placeholder="Username" value="admin" id="user-${pdu.ip}">
-                        <input type="password" placeholder="Password" value="admin" id="pass-${pdu.ip}">
-                        <button class="btn btn-small" onclick="testCredentials('${pdu.ip}')">Testar</button>
+                        <input type="text" placeholder="${translations.username}" value="admin" id="user-${pdu.ip}">
+                        <input type="password" placeholder="${translations.password}" value="admin" id="pass-${pdu.ip}">
+                        <button class="btn btn-small" onclick="testCredentials('${pdu.ip}')">${translations.test}</button>
                     </div>
                     <div id="test-result-${pdu.ip}" style="margin-top: 10px;"></div>
                 </div>
